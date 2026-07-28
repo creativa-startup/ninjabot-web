@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import type { Contact, Funnel, LeadStage } from '../types';
-import { User, ChevronDown, Plus, X } from 'lucide-react';
+import type { Contact, Funnel } from '../types';
+import { User, ChevronDown } from 'lucide-react';
 
 interface FunnelPanelProps {
   contacts: Contact[];
   funnels?: Funnel[];
   onAddFunnel?: (funnel: Funnel) => void;
   onSelectContact: (contact: Contact) => void;
-  onChangeLeadStage?: (contactId: string, stage: LeadStage) => void;
   isMobileLayout?: boolean;
 }
 
@@ -15,8 +14,8 @@ const STAGES = [
   'Lead Nuevo',
   'Contactado',
   'Interesado',
-  'Cotización',
-  'En negociación',
+  'Cotizacion',
+  'En negociacion',
   'Cerrado',
   'Perdido',
 ] as const;
@@ -26,7 +25,6 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
   funnels: parentFunnels,
   onAddFunnel: parentOnAddFunnel,
   onSelectContact,
-  onChangeLeadStage,
   isMobileLayout = false,
 }) => {
   const funnels = parentFunnels || [];
@@ -34,14 +32,13 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
   const [activeFunnelId, setActiveFunnelId] = useState<string | null>(funnels[0]?.id || '1');
 
   // Mobile Sub-View Tab State
-  const [mobileTab, setMobileTab] = useState<'chart' | 'contacts'>('chart');
 
   // Form State
   const [formTipo, setFormTipo] = useState('Servicio');
   const [formInteres, setFormInteres] = useState('Meta Ads Esencial');
   const [formPresupuesto, setFormPresupuesto] = useState('$ 150');
   const [formDescripcion, setFormDescripcion] = useState(
-    'Descripción del Producto o servicio'
+    'DescripciÃƒÂ³n del Producto o servicio'
   );
 
   // Filters State
@@ -66,7 +63,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
       tipo: formTipo || 'Servicio',
       interes: formInteres,
       presupuesto: formPresupuesto || '$ 150',
-      descripcion: formDescripcion || 'Descripción del Producto o servicio',
+      descripcion: formDescripcion || 'DescripciÃƒÂ³n del Producto o servicio',
     };
     if (parentOnAddFunnel) {
       parentOnAddFunnel(newFunnel);
@@ -176,7 +173,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
               <div>
                 <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                  Interés
+                  InterÃƒÂ©s
                 </label>
                 <input
                   type="text"
@@ -202,13 +199,13 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
               <div className="sm:col-span-2 lg:col-span-3">
                 <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                  Descripción
+                  DescripciÃƒÂ³n
                 </label>
                 <input
                   type="text"
                   value={formDescripcion}
                   onChange={(e) => setFormDescripcion(e.target.value)}
-                  placeholder="Descripción del Producto o servicio"
+                  placeholder="DescripciÃƒÂ³n del Producto o servicio"
                   className="w-full bg-white text-gray-900 p-2.5 rounded-lg border-none shadow-2xs text-xs font-medium outline-none focus:ring-2 focus:ring-black/20"
                 />
               </div>
@@ -245,7 +242,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
                   Embudos
                 </span>
 
-                {/* Filter 1: Interés */}
+                {/* Filter 1: InterÃƒÂ©s */}
                 <div className="relative inline-flex items-center">
                   <select
                     value={selectedInteres}
@@ -360,7 +357,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
                   <div>
                     <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                      Interés
+                      InterÃƒÂ©s
                     </label>
                     <input
                       type="text"
@@ -385,7 +382,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
                 <div className="mb-4">
                   <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                    Descripción
+                    DescripciÃƒÂ³n
                   </label>
                   <input
                     type="text"
@@ -538,7 +535,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
               <div>
                 <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                  Interés
+                  InterÃƒÂ©s
                 </label>
                 <input
                   type="text"
@@ -565,13 +562,13 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
             <div>
               <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                Descripción
+                DescripciÃƒÂ³n
               </label>
               <input
                 type="text"
                 value={formDescripcion}
                 onChange={(e) => setFormDescripcion(e.target.value)}
-                placeholder="Descripción del Producto o servicio"
+                placeholder="DescripciÃƒÂ³n del Producto o servicio"
                 className="w-full bg-white text-gray-900 p-2.5 rounded-lg border border-gray-200 shadow-2xs text-xs font-medium outline-none focus:ring-2 focus:ring-black/20"
               />
             </div>

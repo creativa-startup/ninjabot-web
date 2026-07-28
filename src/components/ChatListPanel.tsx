@@ -8,7 +8,6 @@ interface ChatListPanelProps {
   onSelectContact: (contact: Contact) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onNewContactClick: () => void;
 }
 
 export const ChatListPanel: React.FC<ChatListPanelProps> = ({
@@ -17,13 +16,12 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
   onSelectContact,
   searchQuery,
   setSearchQuery,
-  onNewContactClick,
 }) => {
   const filteredContacts = contacts.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.phone.includes(searchQuery) ||
-      c.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+      (c.lastMessage?.toLowerCase() ?? '').includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -79,9 +77,9 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                         {contact.name}
-                        {contact.unreadCount > 0 && (
+                        {(contact.unreadCount ?? 0) > 0 && (
                           <span className="ml-1 text-gray-800 font-bold">
-                            ({contact.unreadCount})
+                            ({contact.unreadCount ?? 0})
                           </span>
                         )}
                       </h3>

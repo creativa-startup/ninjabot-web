@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { SlidersHorizontal, Send, Sparkles, Loader2 } from "lucide-react";
 import { supabase, getPerfilConEmpresa } from "../services/supabase";
 
@@ -21,7 +21,6 @@ interface TestMessage {
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   customInstruction,
-  setCustomInstruction,
   globalAiEnabled,
   setGlobalAiEnabled,
   userName = "Renato",
@@ -112,7 +111,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         if (tempUser.phone !== userData.phone) perfilPayload.phone = tempUser.phone;
 
         if (Object.keys(perfilPayload).length > 0) {
-          const { data: perfilResult, error: perfilError } = await supabase
+          const { error: perfilError } = await supabase
             .from("profiles")
             .update(perfilPayload)
             .eq("id", perfilId)
@@ -132,7 +131,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       };
 
       if (companyId) {
-        const { data: empresaResult, error: empresaError } = await supabase
+        const { error: empresaError } = await supabase
           .from("companies")
             .update(companyPayload)
             .eq("id", companyId)

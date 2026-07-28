@@ -1,4 +1,4 @@
-import { loginUsuario, logoutUsuario, getPerfilActual, getPerfilConEmpresa, supabase } from './services/supabase';
+import { logoutUsuario, getPerfilActual, supabase } from './services/supabase';
 import { useState, useEffect } from 'react';
 import type { Contact, Funnel, LeadStage, NavigationTab } from './types';
 
@@ -28,19 +28,19 @@ export function App() {
   const [isNewContactModalOpen, setIsNewContactModalOpen] = useState(false);
   const [globalAiEnabled, setGlobalAiEnabled] = useState(true);
   const [customInstruction, setCustomInstruction] = useState(
-    "Eres un asesor de ventas de Ninjabot para WhatsApp Business. Responde en espaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±ol de forma muy concisa, amable y profesional (mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ximo 2 oraciones). Tu meta es ofrecer informaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n sobre la automatizaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n de WhatsApp Business y agendar demostraciones."
+    "Eres un asesor de ventas de Ninjabot para WhatsApp Business. Responde en español de forma muy concisa, amable y profesional (máximo 2 oraciones). Tu meta es ofrecer información sobre la automatización de WhatsApp Business y agendar demostraciones."
   );
 
   const activeContact = contacts.find((c) => c.id === activeContactId) || null;
 
-  // Escuchar cambios de sesiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n en tiempo real
+  // Escuchar cambios de sesión en tiempo real
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         try {
           const perfil = await getPerfilActual();
           setUserEmail(perfil.email);
-          setUserName(perfil.full_name || perfil.nombre || '');
+          setUserName(perfil.full_name || '');
           setIsLoggedIn(true);
         } catch {
           // Fallback si no hay perfil en la tabla perfiles
@@ -55,14 +55,14 @@ export function App() {
       }
     });
 
-    // Verificar si ya hay una sesiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n activa al cargar
+    // Verificar si ya hay una sesión activa al cargar
     const restaurarSesion = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         try {
           const perfil = await getPerfilActual();
           setUserEmail(perfil.email);
-          setUserName(perfil.full_name || perfil.nombre || '');
+          setUserName(perfil.full_name || '');
           setIsLoggedIn(true);
         } catch {
           setUserEmail(session.user.email || '');
@@ -88,7 +88,7 @@ export function App() {
     try {
       await logoutUsuario();
     } catch (err) {
-      console.error('Error al cerrar sesiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n:', err);
+      console.error('Error al cerrar sesión:', err);
     }
     setUserEmail('');
     setUserName('');
@@ -166,7 +166,7 @@ export function App() {
         });
 
         const data = await response.json();
-        const replyText = data.reply || "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡Saludos desde Ninjabot! ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿En quÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© puedo guiarte hoy?";
+        const replyText = data.reply || "¡Saludos desde Ninjabot! ¿En qué puedo guiarte hoy?";
 
         const aiMessage = {
           id: `ai-${Date.now()}`,
@@ -240,12 +240,6 @@ export function App() {
     setMobileSubView('chat');
   };
 
-  const handleUpdateContact = (updatedContact: Contact) => {
-    setContacts((prev) =>
-      prev.map((c) => (c.id === updatedContact.id ? updatedContact : c))
-    );
-  };
-
   const handleDeleteContact = (contactId: string) => {
     setContacts((prev) => prev.filter((c) => c.id !== contactId));
     if (activeContactId === contactId) {
@@ -317,7 +311,7 @@ export function App() {
 
             <div className="flex-1 flex flex-col h-full min-w-0">
               <Header
-                subtitle="MensajerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a Inteligente"
+                subtitle="Mensajería Inteligente"
                 showLogoIcon={false}
                 userName={userName}
               />
@@ -331,8 +325,7 @@ export function App() {
                         activeContactId={activeContactId}
                         onSelectContact={handleSelectContact}
                         searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        onNewContactClick={() => setIsNewContactModalOpen(true)}
+                                                setSearchQuery={setSearchQuery}
                       />
                     </div>
                     <div className="flex-1 h-full min-w-0">
@@ -356,22 +349,19 @@ export function App() {
                 {activeTab === 'contacts' && (
                   <ContactsPanel
                     contacts={contacts}
-                    funnels={funnels}
                     onSelectContact={(c) => {
                       handleSelectContact(c);
                       setActiveTab('chats');
                     }}
-                    onUpdateContact={handleUpdateContact}
                     onDeleteContact={handleDeleteContact}
-                    onAddContact={handleAddRawContact}
+                                        onAddContact={handleAddRawContact}
                     onLoadDataset={handleLoadDataset}
-                    onNewContactClick={() => setIsNewContactModalOpen(true)}
                     fetchContactos={fetchContactos}
                     isMobileLayout={false}
                   />
                 )}
 
-                {activeTab === 'funnel' && (
+                                {activeTab === 'funnel' && (
                   <FunnelPanel
                     contacts={contacts}
                     funnels={funnels}
@@ -381,7 +371,6 @@ export function App() {
                       setActiveTab('chats');
                       setMobileSubView('chat');
                     }}
-                    onChangeLeadStage={(id, stage) => handleChangeLeadStage(stage, id)}
                     isMobileLayout={false}
                   />
                 )}
@@ -408,7 +397,7 @@ export function App() {
               <>
                 {mobileSubView === 'list' && (
                   <div className="w-full h-full flex flex-col">
-                    <Header subtitle="MensajerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a Inteligente" userName={userName} />
+                    <Header subtitle="Mensajería Inteligente" userName={userName} />
                     <MobileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
                     <div className="flex-1 overflow-hidden">
                       <ChatListPanel
@@ -416,8 +405,7 @@ export function App() {
                         activeContactId={activeContactId}
                         onSelectContact={handleSelectContact}
                         searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        onNewContactClick={() => setIsNewContactModalOpen(true)}
+                                                setSearchQuery={setSearchQuery}
                       />
                     </div>
                   </div>
@@ -426,7 +414,7 @@ export function App() {
                 {(mobileSubView === 'chat') && (
                   <div className="w-full h-full flex flex-col">
                     <Header
-                      subtitle="MensajerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a Inteligente"
+                      subtitle="Mensajería Inteligente"
                       showBackArrow={true}
                       onBackClick={() => setMobileSubView('list')}
                       userName={userName}
@@ -455,30 +443,27 @@ export function App() {
 
             {activeTab !== 'chats' && (
               <div className="w-full h-full flex flex-col">
-                <Header subtitle="MensajerÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a Inteligente" userName={userName} />
+                <Header subtitle="Mensajería Inteligente" userName={userName} />
                 <MobileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
                 <div className="flex-1 overflow-hidden">
                   {activeTab === 'contacts' && (
                     <ContactsPanel
                       contacts={contacts}
-                      funnels={funnels}
                       onSelectContact={(c) => {
                         handleSelectContact(c);
                         setActiveTab('chats');
                       }}
-                      onUpdateContact={handleUpdateContact}
                       onDeleteContact={handleDeleteContact}
-                      onAddContact={handleAddRawContact}
-                      onLoadDataset={handleLoadDataset}
-                      onNewContactClick={() => setIsNewContactModalOpen(true)}
-                      fetchContactos={fetchContactos}
+                                                                onAddContact={handleAddRawContact}
+                    onLoadDataset={handleLoadDataset}
+                    fetchContactos={fetchContactos}
                       isMobileLayout={true}
                     />
                   )}
 
                   {activeTab === 'funnel' && (
-                    <FunnelPanel
+                                        <FunnelPanel
                       contacts={contacts}
                       funnels={funnels}
                       onAddFunnel={handleAddFunnel}
@@ -487,7 +472,6 @@ export function App() {
                         setActiveTab('chats');
                         setMobileSubView('chat');
                       }}
-                      onChangeLeadStage={(id, stage) => handleChangeLeadStage(stage, id)}
                       isMobileLayout={true}
                     />
                   )}
@@ -520,4 +504,3 @@ export function App() {
   );
 }
 
-export default App;

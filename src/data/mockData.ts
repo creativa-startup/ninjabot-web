@@ -1,18 +1,18 @@
-import type { Contact, Funnel, LeadStage } from "../types";
+import type { Contact, Funnel } from "../types";
 export const INITIAL_FUNNELS: Funnel[] = [
   {
     id: '1',
     tipo: 'Servicio',
     interes: 'Meta Ads Esencial',
     presupuesto: '$ 150',
-    descripcion: 'Campaña de Meta Ads para captación masiva en WhatsApp',
+    descripcion: 'CampaÃ±a de Meta Ads para captaciÃ³n masiva en WhatsApp',
   },
   {
     id: '2',
     tipo: 'Servicio',
     interes: 'Bot WhatsApp Automation',
     presupuesto: '$ 300',
-    descripcion: 'Agente de Inteligencia Artificial para atención 24/7',
+    descripcion: 'Agente de Inteligencia Artificial para atenciÃ³n 24/7',
   },
   {
     id: '3',
@@ -87,7 +87,7 @@ export const INITIAL_CONTACTS: Contact[] = [
       {
         id: 'm202',
         sender: 'agent',
-        text: '¡Hola Pepe! Buen día, ¿en qué podemos ayudarte hoy?',
+        text: 'Â¡Hola Pepe! Buen dÃ­a, Â¿en quÃ© podemos ayudarte hoy?',
         timestamp: '10:25 am',
         channel: 'whatsapp',
         status: 'delivered',
@@ -96,7 +96,7 @@ export const INITIAL_CONTACTS: Contact[] = [
   },
   {
     id: '3',
-    name: 'María Silva',
+    name: 'MarÃ­a Silva',
     phone: '+593 0976543210',
     email: 'maria.silva@tienda.com',
     city: 'Cuenca',
@@ -106,7 +106,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     leadStage: 'Interesado',
     purchases: '0',
     unreadCount: 1,
-    lastMessage: 'Hola, quisiera información sobre los planes',
+    lastMessage: 'Hola, quisiera informaciÃ³n sobre los planes',
     lastTime: '09:15 am',
     aiAgentEnabled: true,
     notes: 'Tiene tienda de ropa deportiva.',
@@ -114,7 +114,7 @@ export const INITIAL_CONTACTS: Contact[] = [
       {
         id: 'm301',
         sender: 'user',
-        text: 'Hola, quisiera información sobre los planes de Ninjabot',
+        text: 'Hola, quisiera informaciÃ³n sobre los planes de Ninjabot',
         timestamp: '09:15 am',
         channel: 'whatsapp',
         status: 'read',
@@ -122,7 +122,7 @@ export const INITIAL_CONTACTS: Contact[] = [
       {
         id: 'm302',
         sender: 'ia',
-        text: '¡Hola María! Con mucho gusto. Ninjabot te ayuda a automatizar respuestas en WhatsApp Business con IA. Tenemos plan Básico ($29/mes) y Pro ($69/mes). ¿Te gustaría agendar una demo gratuita?',
+        text: 'Â¡Hola MarÃ­a! Con mucho gusto. Ninjabot te ayuda a automatizar respuestas en WhatsApp Business con IA. Tenemos plan BÃ¡sico ($29/mes) y Pro ($69/mes). Â¿Te gustarÃ­a agendar una demo gratuita?',
         timestamp: '09:16 am',
         channel: 'ia',
         status: 'read',
@@ -131,7 +131,7 @@ export const INITIAL_CONTACTS: Contact[] = [
   },
   {
     id: '4',
-    name: 'Carlos López',
+    name: 'Carlos LÃ³pez',
     phone: '+593 0981112233',
     email: 'carlos.lopez@tech.ec',
     city: 'Quito',
@@ -141,7 +141,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     leadStage: 'Cerrado',
     purchases: '3',
     unreadCount: 0,
-    lastMessage: 'Gracias por la atención rápida',
+    lastMessage: 'Gracias por la atenciÃ³n rÃ¡pida',
     lastTime: 'Ayer',
     aiAgentEnabled: true,
     notes: 'Cliente activo Plan Pro desde hace 3 meses.',
@@ -149,7 +149,7 @@ export const INITIAL_CONTACTS: Contact[] = [
       {
         id: 'm401',
         sender: 'user',
-        text: '¿Dónde puedo descargar la factura de este mes?',
+        text: 'Â¿DÃ³nde puedo descargar la factura de este mes?',
         timestamp: 'Ayer 11:30 am',
         channel: 'whatsapp',
         status: 'read',
@@ -157,7 +157,7 @@ export const INITIAL_CONTACTS: Contact[] = [
       {
         id: 'm402',
         sender: 'ia',
-        text: 'Hola Carlos, puedes descargar tus facturas en el menú Configuración > Facturación o en la app web de Ninjabot.',
+        text: 'Hola Carlos, puedes descargar tus facturas en el menÃº ConfiguraciÃ³n > FacturaciÃ³n o en la app web de Ninjabot.',
         timestamp: 'Ayer 11:31 am',
         channel: 'ia',
         status: 'read',
@@ -165,7 +165,7 @@ export const INITIAL_CONTACTS: Contact[] = [
       {
         id: 'm403',
         sender: 'user',
-        text: 'Gracias por la atención rápida',
+        text: 'Gracias por la atenciÃ³n rÃ¡pida',
         timestamp: 'Ayer 11:32 am',
         channel: 'whatsapp',
         status: 'read',
@@ -198,7 +198,7 @@ export const DEMO_DATASETS = [
         leadStage: 'Lead Nuevo',
         purchases: '0',
         unreadCount: 2,
-        lastMessage: '¿Cuál es el costo de pauta digital?',
+        lastMessage: 'Â¿CuÃ¡l es el costo de pauta digital?',
         lastTime: '11:10 am',
         aiAgentEnabled: true,
         notes: 'Tienda de vestidos de gala.',
@@ -206,7 +206,7 @@ export const DEMO_DATASETS = [
           {
             id: 'm501',
             sender: 'user',
-            text: '¿Cuál es el costo de pauta digital?',
+            text: 'Â¿CuÃ¡l es el costo de pauta digital?',
             timestamp: '11:10 am',
             channel: 'whatsapp',
             status: 'read',
@@ -215,7 +215,7 @@ export const DEMO_DATASETS = [
       },
       {
         id: '6',
-        name: 'Galo Benítez',
+        name: 'Galo BenÃ­tez',
         phone: '+593 0998877665',
         email: 'g.benitez@constructora.com',
         city: 'Quito',
@@ -228,7 +228,7 @@ export const DEMO_DATASETS = [
         lastMessage: 'Adjunto planos del proyecto',
         lastTime: 'Ayer',
         aiAgentEnabled: false,
-        notes: 'Constructora de condominios en Cumbayá.',
+        notes: 'Constructora de condominios en CumbayÃ¡.',
         messages: [
           {
             id: 'm601',

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Send, Sparkles, Paperclip, ChevronDown, Check, Bot } from 'lucide-react';
-import type { Contact, LeadStage, Message } from '../types';
+import type { Contact, LeadStage } from '../types';
 
 interface ChatDetailPanelProps {
   contact: Contact;
@@ -38,7 +38,7 @@ export const ChatDetailPanel: React.FC<ChatDetailPanelProps> = ({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [contact.messages, isLoadingAi]);
+  }, [contact.messages?.length, isLoadingAi]);
 
   const handleSend = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -136,7 +136,7 @@ export const ChatDetailPanel: React.FC<ChatDetailPanelProps> = ({
 
       {/* Conversation Thread Canvas */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#ececec]">
-        {contact.messages.map((msg) => {
+        {contact.messages?.map((msg) => {
           const isUser = msg.sender === 'user';
           const isIA = msg.sender === 'ia';
 

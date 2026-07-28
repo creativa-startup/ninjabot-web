@@ -1,14 +1,12 @@
-﻿import React, { useState } from "react";
-import type { Contact, Funnel, LeadStage } from "../types";
+import React, { useState } from "react";
+import type { Contact, LeadStage } from "../types";
 import { Search, User, Database, Sparkles, Plus } from "lucide-react";
 import { DEMO_DATASETS } from "../data/mockData";
 import { supabase, getPerfilConEmpresa } from "../services/supabase";
 
 interface ContactsPanelProps {
   contacts?: Contact[];
-  funnels?: Funnel[];
   onSelectContact?: (contact: Contact) => void;
-  onUpdateContact?: (updatedContact: Contact) => void;
   onDeleteContact?: (contactId: string) => void;
   onAddContact?: (newContact: Contact) => void;
   onLoadDataset?: (datasetContacts: Contact[]) => void;
@@ -18,9 +16,7 @@ interface ContactsPanelProps {
 
 export const ContactsPanel: React.FC<ContactsPanelProps> = ({
   contacts = [],
-  funnels = [],
   onSelectContact = () => {},
-  onUpdateContact = () => {},
   onDeleteContact = () => {},
   onAddContact = () => {},
   onLoadDataset = () => {},
@@ -225,7 +221,7 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
                   <button
                     key={ds.id}
                     onClick={() => {
-                      onLoadDataset(ds.contacts);
+                      onLoadDataset(ds.contacts as unknown as Contact[]);
                       setShowDatasetMenu(false);
                     }}
                     className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-xl font-medium text-gray-800 flex items-center justify-between transition-colors"
