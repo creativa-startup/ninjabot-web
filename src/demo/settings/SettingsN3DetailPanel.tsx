@@ -20,7 +20,7 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, Plus, ShoppingBag, Ticket, User, Plug, Zap, LayoutDashboard, Camera, ThumbsUp, MessageCircle, ArrowLeftRight, CheckCircle2, Package, Boxes, QrCode, BadgeCheck, Pencil, Mail, Phone, Palette } from 'lucide-react';
-import { ProductCard } from '../shop/ProductCard';
+import { ProductCard } from '../../components/ui/ProductCard';
 import { UiUxView } from '../uiux/UiUxView';
 import { Avatar } from '../../components/ui/Avatar';
 import type { DemoProduct, DemoOrder, DemoTicket, DemoSoldTicket, DemoMetaConnection, SettingsView } from './mockSettings';

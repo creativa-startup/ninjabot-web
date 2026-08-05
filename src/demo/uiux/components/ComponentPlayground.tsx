@@ -18,7 +18,7 @@ import { CHANNEL_CONFIG } from '../../../features/chats/channelConfig';
 import type { SocialPost } from '../../../features/chats/types';
 import { VideoCard } from '../../../components/ui/VideoCard';
 import { ControlCreatePost } from '../../../components/ui/ControlCreatePost';
-import { ProductCard } from '../../shop/ProductCard';
+import { ProductCard } from '../../../components/ui/ProductCard';
 import type { TargetComponent } from '../mockPlaygroundData';
 import { PLAYGROUND_MOCK_POST, PLAYGROUND_MOCK_PRODUCT, PLAYGROUND_VIDEO } from '../mockPlaygroundData';
 

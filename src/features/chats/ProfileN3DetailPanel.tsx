@@ -3,20 +3,25 @@
  * @description Panel taxonómico N3 (Detail) para el perfil público de un "Ninjat".
  * GRADUADO desde el Sandbox (src/demo/profiles/ProfilesN3DetailPanel.tsx) a producción.
  *
- * Diseño aplicado:
- * - Transparencias puras (bg-transparent) — el panel hereda el fondo del shell N3.
- * - Scroll único del panel (ProfileBody flex-1 overflow-y-auto).
- * - ProfileHeaderCard (Capa 1 — bordes rectos 0px, superficies glass-card) como
- *   cabecera unificada. CORRE con el scroll (pt-8 sm:pt-10 viaja con el header).
- * - ControlProfileTabs: barra STICKY (sticky top-0) con backdrop-blur. Feed ↔ Store.
- * - Feed: histórico real de Ninjats vía PostFeedCard (datos de postService.fetchPostsByUser).
- * - Store: vitrina ProductCard (Social Commerce) — empty-state elegante sin datos mock.
+ * DEPENDENCIA CIRCULAR ERRADICADA:
+ * Los tipos `NinjatProfile` y `NinjatProfileStats` se importan desde el módulo
+ * independiente `src/features/chats/types/profile.ts` (ya NO desde el hook),
+ * y se RE-EXPORTAN en este panel para mantener la retrocompatibilidad.
  *
  * Datos REALES de producción:
  * - profile:  NinjatProfile recuperada de Supabase (getProfileByHandle).
  * - posts:    SocialPost[] del histórico del creador (postService.fetchPostsByUser).
+ * - products: ProductCardProduct[] del catálogo real (productService.fetchProductsByUser).
  * - stats:    NinjatProfileStats reactivas (useNinjatProfile).
  * - error:    mensaje no bloqueante (handle inexistente o fallo de red).
+ *
+ * Diseño aplicado (Capa 1):
+ * - Transparencias puras (bg-transparent) — el panel hereda el fondo del shell N3.
+ * - Scroll único del panel (ProfileBody flex-1 overflow-y-auto).
+ * - ProfileHeaderCard — cabecera unificada que CORRE con el scroll.
+ * - ControlProfileTabs: barra STICKY (sticky top-0) con backdrop-blur.
+ * - Tienda: grilla responsiva de ProductCard con productos reales inyectados
+ *   por props; EmptyState limpio si no hay catálogo.
  */
 
 import React, { useState } from 'react';
@@ -24,25 +29,25 @@ import { ChevronLeft, User, ShoppingBag } from 'lucide-react';
 import { ProfileHeaderCard, type ProfileHeaderCardProfile } from './ProfileHeaderCard';
 import { ControlProfileTabs, type ProfileTab } from './ControlProfileTabs';
 import type { SocialPost } from './types';
-import type { NinjatProfileStats } from './hooks/useNinjatProfile';
 import { PostFeedCard } from './PostFeedCard';
 import { ProductCard, type ProductCardProduct } from '../../components/ui/ProductCard';
 import { useTheme } from '../../theme/ThemeContext';
 
-export interface NinjatProfile {
-  id: string;
-  email?: string | null;
-  full_name?: string | null;
-  handle?: string | null;
-  role?: string | null;
-  auth_source?: string | null;
-  phone?: string | null;
-  [key: string]: any;
-}
+// ─── Re-export de tipos (retrocompatibilidad) — módulo independiente ───
+export type {
+  NinjatProfile,
+  NinjatProfileStats,
+} from './types/profile';
+import type {
+  NinjatProfile,
+  NinjatProfileStats,
+} from './types/profile';
 
 export interface ProfileN3DetailPanelProps {
   profile: NinjatProfile;
   posts: SocialPost[];
+  /** Productos del catálogo real (tabla products — inyectados por el hook) */
+  products?: ProductCardProduct[];
   /** Estado de carga del histórico de posts */
   isLoadingPosts?: boolean;
   /** Callback de retorno → vuelve al feed/social (N2) */
@@ -55,15 +60,9 @@ export interface ProfileN3DetailPanelProps {
   error?: string | null;
 }
 
-/* ─── Punto de extensión: catálogo de productos real vía API de productos ───
- * En producción los productos se alimentarán desde la tabla `products`
- * (Supabase) — ver seed.sql. Mientras tanto, la grilla Tienda muestra un
- * empty-state elegante sin datos simulados. */
-const EMPTY_PRODUCTS: ProductCardProduct[] = [];
-
-/** Resuelve la URL del avatar del perfil (compat: avatar_url o avatarUrl) */
+/** Resuelve la URL del avatar del perfil (columna real `avatar_url` nullable) */
 const resolveAvatarUrl = (profile: NinjatProfile): string | null => {
-  const url = profile.avatar_url || profile.avatarUrl;
+  const url = profile.avatar_url;
   return typeof url === 'string' && url.trim() ? url : null;
 };
 
@@ -76,13 +75,9 @@ const toProfileHeaderProfile = (profile: NinjatProfile, externalStats?: NinjatPr
     id: profile.id,
     name: displayName,
     handle: profile.handle || '',
-    bio: typeof profile.bio === 'string' ? profile.bio : undefined,
     avatarUrl: resolveAvatarUrl(profile),
-    bannerUrl: typeof profile.banner_url === 'string' ? profile.banner_url : undefined,
     // Seguidores reales del perfil; fallback al total de likes del hook reactivo.
-    followers: typeof profile.followers === 'number' ? profile.followers : (externalStats?.totalLikes ?? 0),
-    location: typeof profile.location === 'string' ? profile.location : undefined,
-    website: typeof profile.website === 'string' ? profile.website : undefined,
+    followers: externalStats?.totalLikes ?? 0,
     isOnline: true,
   };
 };
@@ -90,6 +85,7 @@ const toProfileHeaderProfile = (profile: NinjatProfile, externalStats?: NinjatPr
 export const ProfileN3DetailPanel: React.FC<ProfileN3DetailPanelProps> = ({
   profile,
   posts,
+  products = [],
   isLoadingPosts = false,
   onBack,
   onAuthorClick,
@@ -129,7 +125,7 @@ export const ProfileN3DetailPanel: React.FC<ProfileN3DetailPanelProps> = ({
           />
         </div>
 
-        {/* ─── Navegación por pestañas: Feed ↔ Tienda (Social Commerce) — STICKY en el top ─── */}
+        {/* ─── Navegación por pestañas: Feed ↔ Tienda — STICKY con backdrop blur ─── */}
         <div
           className={`sticky top-0 z-10 backdrop-blur-md border-b ${
             isDark ? 'bg-black/40 border-white/10' : 'bg-white/90 border-black/5'
@@ -142,13 +138,13 @@ export const ProfileN3DetailPanel: React.FC<ProfileN3DetailPanelProps> = ({
           />
         </div>
 
-        {/* ─── Contenido condicional: Feed (histórico real) ↔ Store (catálogo) ─── */}
+        {/* ─── Contenido condicional: Feed (histórico real) ↔ Store (catálogo real) ─── */}
         <div className="px-4 sm:px-5 pb-6 flex flex-col gap-3 transition-colors duration-500 bg-transparent">
-          {/* ─── TAB STORE: vitrina ProductCard (Social Commerce) ─── */}
+          {/* ─── TAB STORE: vitrina ProductCard (Social Commerce — datos REALES) ─── */}
           {activeTab === 'store' && (
-            EMPTY_PRODUCTS.length > 0 ? (
+            products.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {EMPTY_PRODUCTS.map((product) => (
+                {products.map((product) => (
                   <ProductCard
                     key={product.id}
                     product={product}

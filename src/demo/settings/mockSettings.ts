@@ -6,9 +6,13 @@
  *   - SettingsN2ListPanel (Panel N2 — Lista de Módulos con badges opcionales)
  *   - SettingsN3DetailPanel (Panel N3 — Detalle dinámico según activeView)
  *   - CatalogN4CreateProductForm (Panel N4 — Foco de creación de producto)
+ *
+ * CONTRATO ALINEADO: `DemoProduct` extiende `ProductCardProduct` del átomo de
+ * producción (src/components/ui/ProductCard.tsx) — usa `name`, `price` numérico,
+ * `image_url` y `sku`. SIN `category` (columna inexistente en la tabla products).
  */
 
-import type { ProductCardProduct } from '../shop/ProductCard';
+import type { ProductCardProduct } from '../../components/ui/ProductCard';
 
 /* ─── Vistas de configuración (sub-módulos del Perfil) ─── */
 export type SettingsView =
@@ -85,51 +89,51 @@ export interface DemoProduct extends ProductCardProduct {
 export const DEMO_STORE_PRODUCTS: DemoProduct[] = [
   {
     id: 'prod-1',
-    title: 'Plantilla de Reels',
-    price: '29.99 USD',
+    name: 'Plantilla de Reels',
+    price: 29.99,
+    currency: 'USD',
     sku: 'TPL-REELS-001',
-    imageUrl: null,
-    category: 'Disponible',
+    image_url: null,
   },
   {
     id: 'prod-2',
-    title: 'Guía Growth Hacking',
-    price: '19.99 USD',
+    name: 'Guía Growth Hacking',
+    price: 19.99,
+    currency: 'USD',
     sku: 'GUI-GROW-002',
-    imageUrl: null,
-    category: 'Disponible',
+    image_url: null,
   },
   {
     id: 'prod-3',
-    title: 'Curso Embudos IA',
-    price: '49.99 USD',
+    name: 'Curso Embudos IA',
+    price: 49.99,
+    currency: 'USD',
     sku: 'CRS-FUNNEL-003',
-    imageUrl: null,
-    category: 'Disponible',
+    image_url: null,
   },
   {
     id: 'prod-4',
-    title: 'Pack Mockups',
-    price: '9.99 USD',
+    name: 'Pack Mockups',
+    price: 9.99,
+    currency: 'USD',
     sku: 'PKG-MOCK-004',
-    imageUrl: null,
-    category: 'Disponible',
+    image_url: null,
   },
   {
     id: 'prod-5',
-    title: 'Mentoría 1:1',
-    price: '79.99 USD',
+    name: 'Mentoría 1:1',
+    price: 79.99,
+    currency: 'USD',
     sku: 'MNT-ONE-005',
-    imageUrl: null,
-    category: 'Stock limitado',
+    image_url: null,
   },
   {
     id: 'prod-6',
-    title: 'Kit Branding',
-    price: '39.99 USD',
+    name: 'Kit Branding',
+    price: 39.99,
+    currency: 'USD',
     sku: 'KIT-BRAND-006',
-    imageUrl: null,
-    category: 'Agotado',
+    image_url: null,
   },
 ];
 

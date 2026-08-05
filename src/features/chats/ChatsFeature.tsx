@@ -139,7 +139,7 @@ export const ChatsFeature: React.FC<ChatsFeatureProps> = ({
 
   // ── Hook 4: Perfil Ninjat público ──
   const navigate = useNavigate();
-  const { ninjatProfile, ninjatPosts, isLoadingNinjat, error: ninjatError, stats: ninjatStats } = useNinjatProfile();
+  const { ninjatProfile, ninjatPosts, ninjatProducts, isLoadingNinjat, error: ninjatError, stats: ninjatStats } = useNinjatProfile();
 
   // ── Hook 5: Entidad activa + filtros N2 ──
   const { activeEntity, filterMode, platformFilter, handleEntityChange } = useActiveEntity(authSource, {
@@ -240,6 +240,7 @@ export const ChatsFeature: React.FC<ChatsFeatureProps> = ({
           <ProfileN3DetailPanel
             profile={ninjatProfile}
             posts={ninjatPosts}
+            products={ninjatProducts}
             isLoadingPosts={isLoadingNinjat}
             stats={ninjatStats}
             error={ninjatError}

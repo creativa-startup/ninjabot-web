@@ -7,12 +7,15 @@
  * para evitar el "Spaghetti de Importaciones" en los componentes de UI.
  *
  * Alineación con componentes reales del Sandbox:
- *   - PlayPost   → contrato SocialPost (src/features/chats/types.ts)
- *   - PlayProduct → contrato ProductCardProduct (src/demo/shop/ProductCard.tsx)
+ *   - PlayPost    → contrato SocialPost (src/features/chats/types.ts)
+ *   - PlayProduct → contrato ProductCardProduct (src/components/ui/ProductCard.tsx)
+ *
+ * CONTRATO ALINEADO AL ESQUEMA REAL DE BD: `PlayProduct` usa `name`, `price`
+ * numérico, `image_url` y `sku`. SIN `category` (columna inexistente en products).
  */
 
 import type { SocialPost } from '../../features/chats/types';
-import type { ProductCardProduct } from '../shop/ProductCard';
+import type { ProductCardProduct } from '../../components/ui/ProductCard';
 
 /** Componentes auditables en el taller (selector del Playground) */
 export type TargetComponent = 'post' | 'product' | 'create-post' | 'video';
@@ -37,14 +40,15 @@ export const PLAYGROUND_MOCK_POST: PlayPost = {
   isOnline: true,
 };
 
-/** Producto demo estándar — contrato ProductCardProduct real */
+/** Producto demo estándar — contrato ProductCardProduct real (esquema products) */
 export const PLAYGROUND_MOCK_PRODUCT: PlayProduct = {
   id: 'play-prod-1',
-  title: 'Taza Cerámica Ópalo',
-  price: '24.99 USD',
-  imageUrl:
+  name: 'Taza Cerámica Ópalo',
+  price: 24.99,
+  currency: 'USD',
+  sku: 'TZA-OPALO-001',
+  image_url:
     'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=300&auto=format&fit=crop',
-  category: 'Disponible',
 };
 
 /** Video demo estándar — props reales de VideoCard (src/components/ui/VideoCard.tsx) */

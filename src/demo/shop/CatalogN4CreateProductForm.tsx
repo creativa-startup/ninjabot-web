@@ -42,11 +42,11 @@ export const CatalogN4CreateProductForm: React.FC<CatalogN4CreateProductFormProp
 
     const product: DemoProduct = {
       id: `prod-${Date.now()}`,
-      title: name.trim(),
-      price: `${price.trim()} USD`,
+      name: name.trim(),
+      price: Number(price.trim()) || 0,
+      currency: 'USD',
       sku: sku.trim().toUpperCase(),
-      imageUrl: imageUrl.trim() || null,
-      category: 'Disponible',
+      image_url: imageUrl.trim() || null,
     };
     onSave(product);
   };
