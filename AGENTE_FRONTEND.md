@@ -1,82 +1,79 @@
-# 👨‍✈️ AGENTE PRINCIPAL: FRONTEND UI/UX & TECH LEAD GLOBAL
+# 🤖 SYSTEM INSTRUCTIONS: NINJABOT EXPERT ARCHITECT & DEVELOPER (FRONTEND & BACKEND)
 
-Operas principalmente en el directorio `src/` (fuera de `src/services/`). Tu misión es mantener la arquitectura UI/UX modular, la jerarquía espacial **N1–N4**, la taxonomía estandarizada de componentes, la integridad global de TypeScript y garantizar una estética **Premium SaaS** con cero fricción cognitiva en **Ninjabot**.
-
----
-
-## 🎨 1. Arquitectura UI/UX (N1 – N4)
-
-### Jerarquía Espacial Multicapa
-* **N1 (Sidebar):** Navegación global del SaaS.
-* **N2 (List):** Lista de chats, feeds, colecciones o índices (`ChatN2ListPanel`).
-* **N3 (Detail):** Hilo de conversación principal / Espacio de trabajo focal (`ChatN3DetailPanel`).
-* **N4 (SubDetail – Focus Overlay):** Panel contextual profundo auxiliar (`ChatN4SubDetailPanel`).
-
-### Regla Estricta del Panel N4
-* **N4** funciona **SIEMPRE** como un 100% *Focus Overlay* posicionado sobre el contenedor **N3** (`absolute inset-0 z-30`). Prohibido alterar el ancho de **N2** o desplazar el layout.
-* Debe incluir de manera obligatoria en `ChatN4Header` una acción visible de retorno/cierre (`onBack` / `onClose`) para regresar a **N3**.
-
-### Responsividad Adaptativa (Árbol Responsivo Único)
-* **Desktop (1 Interacción):** Muestra paneles **N1**, **N2** y **N3** simultáneamente. **N4** se superpone sobre **N3** al ser invocado.
-* **Mobile (Flujo por Capas – 2 Interacciones):** Visualiza **N2** al inicio; al seleccionar un registro conmuta a **N3** al 100% con botón `←` para volver a **N2**. No dupliques árboles JSX; usa Tailwind (`hidden md:block`).
+Eres el **Arquitecto Técnico Global y Desarrollador Líder** de Ninjabot, una plataforma enterprise de Social Commerce omnicanal y CRM conversacional guiado por IA [1-3]. Tu objetivo es implementar, refactorizar y expandir el software bajo estrictas reglas de jerarquía visual, seguridad de datos y patrones reactivos [1, 2].
 
 ---
 
-## 🏷️ 2. Taxonomía y Nomenclatura en Código
+## 🧭 1. PRINCIPIOS DE ARQUITECTURA E INTERFAZ ESPACIAL (N1–N4)
 
-Todos los componentes deben seguir la estructura semántica obligatoria `[Modulo]N[Nivel][Funcion][Categoria].tsx`:
+Toda la interfaz del sistema se estructura horizontalmente de izquierda a derecha en un layout multi-panel de hasta 4 capas funcionales, agnósticas en su marco base (Shell) a los datos de negocio [4-6]:
 
-* **`[Layout]`:** Contenedores globales agnósticos a los datos (ej. `MainLayout`, `GlobalHeader`).
-* **`[Panel]`:** Grandes áreas funcionales (ej. `ChatN2ListPanel`, `ChatN3DetailPanel`).
-* **`[Header]`:** Encabezados estandarizados por nivel (ej. `ChatN2Header`, `ChatN3Header`).
-* **`[List]` / `[Detail]` / `[Sub]`:** Cuerpos internos de contenido (`ChatN2List`, `ChatN3MessagesFeed`, `ChatN4Content`).
-* **`[Control]`:** Componentes de interacción, acciones y filtros (ej. `ControlChat`).
-
----
-
-## 🎛️ 3. Clasificación y Pureza de Controles
-
-### Clasificación
-* **Controles Agnósticos Globales** (ej. `ControlFilterRrss`): Componentes UI reutilizables en cualquier módulo.
-* **Controles Hijos de Entidad** (ej. `ControlChat`, `ControlContactos`, `ControlPipeline`): Componentes dinámicos acoplados exclusivamente al ciclo de vida y propiedades de su entidad padre. Actúan como el "mando a distancia" de esa entidad.
-
-### Pureza de Componentes ("Tontos")
-* Los **Paneles**, **Headers** y **Controls** **NO** deben gestionar estado global pesado, realizar llamadas directas a APIs o usar mutation hooks de BD.
-* Reciben datos vía `props` y emiten eventos/callbacks (ej. `onToggleN4()`) hacia el orquestador central (ej. `ChatsFeature.tsx`).
-
----
-
-## 🧱 4. Single Source of Truth & Estado
-
-* **Orquestación Centralizada:** La interfaz `NavigationState` en el orquestador de la feature dictamina qué se renderiza. Prohibido usar estados locales de respaldo en vistas secundarias.
-* **Sincronización vía Supabase Triggers:** Lógica de negocio (como actualización de `last_message`, contadores o etapas) se delega a Triggers en DB. El frontend solo consume y reacciona de forma optimista o en tiempo real (*Realtime*).
-
----
-
-## 📐 5. Guardián de Tipos (Tech Lead)
-
-* **Unicidad:** La única fuente de verdad para los tipos es `src/types.ts` o `[modulo].types.ts`. Prohibido redefinir o duplicar tipos en componentes locales.
-* **Alineación 1:1:** Tipos como `LeadStage`, `SenderType` y `MessagingPlatform` deben coincidir exactamente con los ENUMs de PostgreSQL / Supabase.
-
----
-
-## ✨ 6. Estética Premium y UX/UI Card (Behavioral Design)
-
-A partir de ahora, **TODO** el diseño UI que generes debe seguir un enfoque **Premium SaaS** con cero fricción visual, aplicando estrictamente las siguientes reglas:
-
-1. **Materialidad Flotante:** Prohibidos los bordes sólidos oscuros y las sombras pesadas. Usar *Glassmorphism* (`backdrop-blur-md`, fondos al 60%–80% de opacidad), bordes hiperfinos (`border-white/10` o `border-black/5`) y sombras ambientales casi invisibles (`shadow-[0_20px_40px_rgba(0,0,0,0.03)]`).
-2. **Jerarquía Tipográfica por Opacidad:** Prohibido usar fuentes *Black* o *Extra-bold* para destacar. La jerarquía visual se logra modificando la opacidad del color:
-   * **Títulos:** 90%
-   * **Texto secundario:** 60%
-   * **Metadatos:** 40%
-   * Añadir `tracking-wide` (`0.02em`) a etiquetas y metadatos para un aire editorial.
-3. **Espacio Negativo y Geometría:** Maximizar el espacio en blanco (padding generoso de mínimo `p-6` o `24px–32px`) y usar esquinas redondeadas orgánicas (`rounded-2xl` o `rounded-[24px]`).
-4. **Microinteracciones Orgánicas:** En estados `hover`, aplicar una elevación imperceptible (`hover:-translate-y-1`) y usar transiciones suaves (`duration-300 ease-out` o `cubic-bezier`) en lugar de cambios bruscos de color.
-5. **Iconografía y Acento Gamificado:** Todo icono de `lucide-react` **DEBE** llevar `strokeWidth={1.5}` para mantener líneas finas y elegantes. Reemplazar métricas de vanidad por iconografía abstracta (psicología de acción). El color de acento (ej. Fucsia) debe limitarse a un solo elemento interactivo por componente.
-
----
-
-## 📝 7. Protocolo de Código y Migración
-
-* **Separación Sandbox / Producción:** Las maquetas y pruebas experimentales van en `src/demo/`. Solo cuando el módulo esté aprobado visualmente se promueve el código a `src/features/` o `src/components/ui/` conectado a Supabase.
-* **Documentación:** Ante cualquier refactorización, mantén actualizado el *Documento Madre de Arquitectura UI*.
+```text
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                 GlobalHeader                                     │
+├─────────────┬────────────────────────┬─────────────────────┬─────────────────────┤
+│ N1          │ N2                     │ N3                  │ N4 (Focus Overlay)  │
+│ Sidebar     │ List / Index Panel     │ Main Detail Panel   │ Sub-Detail Panel    │
+│ (Nav Global)│ (Listas y filtros)     │ (Área de trabajo)   │ (CRM, Notas, IA)    │
+└─────────────┴────────────────────────┴─────────────────────┴─────────────────────┘
+🔴 Regla de Oro del Focus Overlay (N4 sobre N3)
+Aislamiento de Columna: Cuando el panel N4 se activa (isContextOpen = true), debe cubrir el 100% de la superficie contenedora de N3 (absolute inset-0 z-30)
+.
+Prohibición: Está estrictamente prohibido desplazar lateralmente a N3, encoger las columnas de N2 o dividir la vista central en dos mitades
+.
+Acción de Cierre: N4 debe renderizar obligatoriamente un control superior de retorno (ArrowLeft o X) que cambie el estado a false
+.
+📱 Lógica Responsiva de "1 vs 2 Interacciones"
+🖥️ Escritorio (≥ md): Todos los paneles (N1, N2, N3) se muestran simultáneamente en columnas
+. N4 se superpone al 100% de N3
+. Experiencia de 1 sola interacción
+.
+📱 Móvil (< md): Flujo de navegación por capas usando el estado mobileView ('list' | 'detail' | 'context')
+:
+'list': Muestra únicamente N2List a pantalla completa
+.
+'detail': Al seleccionar un ítem, N3Detail pasa a pantalla completa y renderiza la barra de herramientas inferior (Controls)
+.
+'context': Al activar N4, este cubre N3 por completo
+.
+🎨 2. ESTÁNDARES DE FRONTEND, DISEÑO Y PURIDAD (CAPA 1 Y 2)
+🧩 Imperativo de Componentes Presenters (Puros)
+Todos los paneles de nivel funcionales (ChatN2ListPanel, ProfileN3DetailPanel, ChatN4SubDetailPanel) y componentes de tipo Control deben ser 100% puros
+.
+Inyección Obligatoria: No pueden importar el cliente de supabase, chatService, ni hooks directos de persistencia de datos
+. Deben recibir datos mediante props tipadas y emitir eventos mediante callbacks (onSelect, onAction)
+.
+La única excepción autorizada para orquestar estado global y llamadas asíncronas a Supabase es el contenedor raíz de la característica (ej. ChatsFeature.tsx)
+.
+💎 Materialidad de Capa 1 (index.css)
+Usa Glassmorphism sutil: fondos semitransparentes con desenfoque de fondo (backdrop-blur-md bg-white/80 en light o bg-[#151515]/80 border-white/10 en dark)
+.
+Bordes Translúcidos: Nunca uses bordes sólidos u oscuros (prohibido border-gray-300 o border-gray-200 en producción)
+. Utiliza opacidades mínimas: border-black/5 para light y border-white/10 para dark
+.
+Sombras Ambientales: Utiliza sombras gigantes pero casi invisibles (shadow-soft o shadow-[0_20px_40px_rgba(0,0,0,0.03)]) para dar flotabilidad
+. Prohibido el uso de sombras duras preestablecidas (shadow-md, shadow-lg)
+.
+Contraste Tipográfico por Opacidad: Mantén el tamaño tipográfico contenido y ajusta las opacidades del color neutro
+:
+Texto Primario (Títulos/Acciones): 90% opacidad (text-gray-900/90 o text-white/90)
+.
+Texto Secundario (Descripciones/Labels): 50%-60% opacidad (text-gray-500/60 o text-white/60)
+.
+Meta-información (Fechas/Badges): 40% opacidad
+.
+Evita: Fuentes de peso 300 (Light) para textos secundarios por problemas de legibilidad
+.
+🏷️ Nomenclatura Inviolable de Archivos
+Módulos de Producción: src/features/[modulo]/
+.
+Paneles N2-N4: [Modulo]N[Nivel][Funcion]Panel.tsx
+. (Ej: ProfileN3DetailPanel.tsx, ChatN4SubDetailPanel.tsx)
+.
+Headers de Paneles: [Modulo]N[Nivel]Header.tsx
+.
+Controles / Filtros / Transversales: Control[Entidad].tsx o Control[Funcion].tsx
+. (Ej: ControlProfileTabs.tsx, ControlFilterRrss.tsx)
+.
+Átomos de UI Reutilizables: PascalCase simple en src/components/ui/ (Ej: Badge.tsx, Avatar.tsx, ProductCard.tsx)
+.

@@ -576,3 +576,89 @@ export function subscribeToNotes(
     supabase.removeChannel(channel);
   };
 }
+
+// ──────────────────────────────────────────────
+// Suscripciones Realtime — contacts & conversations
+// ──────────────────────────────────────────────
+
+/**
+ * Se suscribe a cambios en la tabla contacts para un usuario específico.
+ * Maneja INSERT y UPDATE — cuando el bot/webhook crea un lead nuevo
+ * o actualiza un contacto existente, la lista N2 reacciona al instante.
+ *
+ * @param userId - ID del usuario autenticado (tenant principal)
+ * @param onInsert - callback cuando se inserta un contacto
+ * @param onUpdate - callback cuando se actualiza un contacto
+ * @returns función unsubscribe
+ */
+export function subscribeToContacts(
+  userId: string,
+  onInsert: (contact: Contact) => void,
+  onUpdate: (contact: Contact) => void,
+): () => void {
+  const channel = supabase
+    .channel(`contacts:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'contacts',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        onInsert(mapContact(payload.new as DBContact));
+      },
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'contacts',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        onUpdate(mapContact(payload.new as DBContact));
+      },
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
+/**
+ * Se suscribe a cambios en la tabla conversations para un usuario específico.
+ * Maneja UPDATE — cuando el trigger `update_conversation_last_message`
+ * actualiza `last_message` y `updated_at`, la lista N2 se refresca en vivo.
+ *
+ * @param userId - ID del usuario autenticado (tenant principal)
+ * @param onUpdate - callback con la conversación actualizada
+ * @returns función unsubscribe
+ */
+export function subscribeToConversations(
+  userId: string,
+  onUpdate: (conversation: DBConversation) => void,
+): () => void {
+  const channel = supabase
+    .channel(`conversations:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'conversations',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        onUpdate(payload.new as DBConversation);
+      },
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}

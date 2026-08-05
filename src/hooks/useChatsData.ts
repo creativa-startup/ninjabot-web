@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Contact, Message, Note, PlatformConnection } from '../types';
+import { supabase } from '../services/supabase';
 import {
   fetchContactsWithConversations,
   fetchMessagesByContact,
@@ -24,6 +25,8 @@ import {
   deleteNote as deleteNoteToDB,
   subscribeToMessages,
   subscribeToNotes,
+  subscribeToContacts,
+  subscribeToConversations,
 } from '../services/chatService';
 
 export interface ChatsDataState {
@@ -81,6 +84,8 @@ export function useChatsData(autoConnect = true): ChatsDataState & ChatsDataActi
   // Refs para almacenar los unsubscribe de Realtime
   const messageSubscriptions = useRef<Map<string, () => void>>(new Map());
   const noteSubscriptions = useRef<Map<string, () => void>>(new Map());
+  const contactsSubscription = useRef<(() => void) | null>(null);
+  const conversationsSubscription = useRef<(() => void) | null>(null);
 
   // ──────────────────────────────────────────
   // Limpieza de suscripciones al desmontar
@@ -91,6 +96,10 @@ export function useChatsData(autoConnect = true): ChatsDataState & ChatsDataActi
       noteSubscriptions.current.forEach((unsub) => unsub());
       messageSubscriptions.current.clear();
       noteSubscriptions.current.clear();
+      contactsSubscription.current?.();
+      contactsSubscription.current = null;
+      conversationsSubscription.current?.();
+      conversationsSubscription.current = null;
     };
   }, []);
 
@@ -104,6 +113,60 @@ export function useChatsData(autoConnect = true): ChatsDataState & ChatsDataActi
     try {
       const fetchedContacts = await fetchContactsWithConversations();
       setContacts(fetchedContacts);
+
+      // ── Suscripción Realtime Total ──
+      // contacts (INSERT/UPDATE) + conversations (UPDATE por el trigger last_message)
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // Limpiar suscripciones previas antes de recrear (idempotente)
+        contactsSubscription.current?.();
+        contactsSubscription.current = null;
+        conversationsSubscription.current?.();
+        conversationsSubscription.current = null;
+
+        // contacts: INSERT — nuevo lead del bot/webhook aparece al instante en N2
+        contactsSubscription.current = subscribeToContacts(
+          user.id,
+          (newContact) => {
+            setContacts((prev) => {
+              if (prev.some((c) => c.id === newContact.id)) return prev;
+              return [newContact, ...prev];
+            });
+          },
+          // contacts: UPDATE — cambios directos al contacto se reflejan en vivo
+          (updatedContact) => {
+            setContacts((prev) =>
+              prev.map((c) => (c.id === updatedContact.id ? { ...c, ...updatedContact } : c))
+            );
+          },
+        );
+
+        // conversations: UPDATE — el trigger update_conversation_last_message
+        // dispara este evento tras cada mensaje nuevo (last_message + updated_at)
+        conversationsSubscription.current = subscribeToConversations(user.id, (conv) => {
+          setContacts((prev) =>
+            prev.map((c) => {
+              if (c.id !== conv.contact_id) return c;
+              const date = new Date(conv.updated_at);
+              const now = new Date();
+              const diffMs = now.getTime() - date.getTime();
+              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+              const lastTime =
+                diffHours < 1
+                  ? 'Ahora'
+                  : diffHours < 24
+                    ? date.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })
+                    : date.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+              return {
+                ...c,
+                lastMessage: conv.last_message || c.lastMessage,
+                lastTime,
+              };
+            })
+          );
+        });
+      }
 
       // Cargar todas las notas una vez
       const fetchedAllNotes = await fetchAllNotes();
@@ -156,7 +219,6 @@ export function useChatsData(autoConnect = true): ChatsDataState & ChatsDataActi
         // Ya tenemos mensajes — ver si ya hay suscripción
         if (!messageSubscriptions.current.has(contactId)) {
           // Necesitamos el conversationId — lo obtenemos de la DB
-          const { supabase } = await import('../services/supabase');
           const { data: conv } = await supabase
             .from('conversations')
             .select('id')
@@ -192,7 +254,6 @@ export function useChatsData(autoConnect = true): ChatsDataState & ChatsDataActi
 
       // Suscribirse a cambios en notas en tiempo real
       if (!noteSubscriptions.current.has(contactId)) {
-        const { supabase } = await import('../services/supabase');
         const { data: conv } = await supabase
           .from('conversations')
           .select('id')

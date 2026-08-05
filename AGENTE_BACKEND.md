@@ -1,23 +1,70 @@
 # 🛡️🌐 AGENTE BACKEND, SUPABASE & INTEGRACIONES OMNICANAL
 
-Operas principalmente dentro de `src/services/` y capas de base de datos. Tu misión es garantizar la integridad multi-tenant, la seguridad de las integraciones externas y el procesamiento eficiente en tiempo real para Ninjabot.
+## 📋 DIAGNÓSTICO: SINCRONIZACIÓN FRONTEND ↔ BACKEND EN PRODUCCIÓN
+
+**Fecha:** 8 Mayo 2026 | **Proyecto:** `qyudscnbmdgaghsiunga` | **Estado:** ✅ Realtime Total implementado
 
 ---
 
-### 🛡️ 1. BASE DE DATOS, RLS & AUTOMATIZACIÓN (SUPABASE / POSTGRESQL)
-- **Seguridad Multi-Tenant (RLS):** Toda tabla y consulta debe aplicar estrictamente Row Level Security (RLS) validando `tenant_id` y `auth.uid()`.
-- **Cifrado & Secretos:** NUNCA exponer o almacenar tokens sensibles (`access_token`, `verify_token`) en texto plano. Usar Supabase Vault o variables de entorno.
-- **Lógica en BD vía Triggers:** Toda actualización derivada de mensajería (`last_message`, contadores, `lead_stage`) debe procesarse vía Triggers en PostgreSQL. El frontend consume el estado resultante vía Realtime.
+## 🎯 Problema
+El frontend no reflejaba los cambios del backend en producción. Supabase tenía los datos pero la lista N2 no se actualizaba.
 
----
+## 🔴 CAUSA RAÍZ: Suscripción Realtime Incompleta
+`useChatsData.ts` solo se suscribía a `messages` y `conversation_notes`. **Faltaban `contacts` y `conversations`**.
 
-### 🌐 2. INTEGRACIONES & PIPELINE DE DATOS (META / CAPI / IA)
-- **Meta CAPI Events:** Garantizar la emisión de eventos Conversions API con parámetros de atribución completos (`fbp`, `fbc`, `client_ip_address`, `source_url`, `user_data` hasheado).
-- **Tratamiento de Webhooks:** Manejo defensivo obligatorio: firma HMAC (`X-Hub-Signature-256`), idempotencia de mensajes y reintentos exponenciales.
-- **Procesamiento de IA:** Sincronización directa con el `IAToggleSwitch` (activación/pausa de auto-respuesta).
+| Evento backend | Antes | Ahora |
+|---|---|---|
+| Bot crea contacto (INSERT contacts) | ❌ No aparecía | ✅ Al instante |
+| Update contacto (UPDATE contacts) | ❌ Sin reflejo | ✅ Se propaga |
+| Mensaje → trigger update `last_message` | ❌ Sin cambio preview | ✅ N2 en vivo |
 
----
+## ✅ REMEDIACIÓN IMPLEMENTADA
 
-### 🧱 3. ARQUITECTURA DE CÓDIGO Y LÍMITES
-- **Desacoplamiento Absoluto:** Módulos en `src/services/` en TypeScript puro. Prohibido importar React hooks, JSX/TSX, Tailwind o componentes visuales.
-- **Mapeo Tipado 1:1:** Consultas de Supabase reflejadas directamente en `src/types.ts`.
+### `src/services/chatService.ts` — 2 nuevos métodos:
+- **`subscribeToContacts(userId, onInsert, onUpdate)`** — canal `contacts:{userId}` con listeners INSERT/UPDATE filtrados por `user_id`.
+- **`subscribeToConversations(userId, onUpdate)`** — canal `conversations:{userId}` con listener UPDATE (disparado por el trigger `update_conversation_last_message`).
+
+### `src/hooks/useChatsData.ts` — conexión en `loadData()`:
+```typescript
+const { data: { user } } = await supabase.auth.getUser();
+if (user) {
+  contactsSubscription.current = subscribeToContacts(user.id,
+    (nc) => setContacts(prev => prev.some(c => c.id === nc.id) ? prev : [nc, ...prev]),
+    (uc) => setContacts(prev => prev.map(c => c.id === uc.id ? { ...c, ...uc } : c)),
+  );
+  conversationsSubscription.current = subscribeToConversations(user.id, (conv) => {
+    setContacts(prev => prev.map(c => c.id !== conv.contact_id ? c : { ...c, lastMessage: conv.last_message || c.lastMessage, lastTime: /* formateado */ }));
+  });
+}
+```
+- Limpieza idempotente al desmontar: `contactsSubscription.current?.()` + `conversationsSubscription.current?.()`.
+- Import estático de `supabase` (elimina `INEFFECTIVE_DYNAMIC_IMPORT` del build).
+
+## 🟡 PENDIENTE: RLS en `contacts` y `conversations`
+`migration.sql` no habilita RLS en estas 2 tablas. **SQL a ejecutar en Supabase:**
+
+```sql
+BEGIN;
+ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "contacts_select_own" ON contacts FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "contacts_insert_own" ON contacts FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "contacts_update_own" ON contacts FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY "contacts_delete_own" ON contacts FOR DELETE USING (user_id = auth.uid());
+
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "conversations_select_own" ON conversations FOR SELECT USING (user_id = auth.uid() OR contact_id IN (SELECT id FROM contacts WHERE user_id = auth.uid()));
+CREATE POLICY "conversations_insert_own" ON conversations FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "conversations_update_own" ON conversations FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY "conversations_delete_own" ON conversations FOR DELETE USING (user_id = auth.uid());
+COMMIT;
+```
+
+## 🟡 RIESGO: Contactos huérfanos
+Contactos sin `user_id` se asignaron a `renatomasa@gmail.com`. Verificar que el bot copie el `user_id` correcto del tenant al insertar.
+
+## ✅ VERIFICACIÓN
+| Validación | Resultado |
+|---|---|
+| `npm run build` | ✅ 0 errores TypeScript |
+| `subscribeToContacts` / `subscribeToConversations` | ✅ Exportados |
+| Listener Realtime en hook | ✅ Conectado + limpieza |

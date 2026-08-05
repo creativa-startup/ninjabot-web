@@ -41,6 +41,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/auth/],
+        // Fuerza Inmediata de PWA: destruir la UI antigua cacheada
+        // y montar la versión nueva en el PRIMER acceso (skipWaiting + clientsClaim).
+        skipWaiting: true,
+        clientsClaim: true,
       },
       devOptions: {
         enabled: true,
