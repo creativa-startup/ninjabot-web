@@ -1,10 +1,36 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ninjabot-v1</title>
+    <meta name="theme-color" content="#ffffff" />
+    <title>Ninjabot — Mensajería Inteligente</title>
+
+    <!-- Anti-Flash: aplica el tema guardado antes de que React monte -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('ninjabot-theme');
+          if (stored === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <!-- Meta / Facebook SDK - Se carga asíncronamente -->
+    <!-- NOTA: Las variables VITE_ solo funcionan en código TypeScript procesado por Vite.
+         Por eso la inicialización se hace en src/services/metaSdk.ts con initFacebookSdk().
+         Aquí solo cargamos el script; fbAsyncInit se define desde el servicio TS. -->
+    <script>
+      (function (d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/es_LA/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
   </head>
   <body>
     <div id="root"></div>

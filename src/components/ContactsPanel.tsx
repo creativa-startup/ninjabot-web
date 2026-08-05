@@ -1,15 +1,12 @@
 import React, { useState } from "react";
 import type { Contact, LeadStage } from "../types";
-import { Search, User, Database, Sparkles, Plus } from "lucide-react";
-import { DEMO_DATASETS } from "../data/mockData";
+import { Search, User, Plus } from "lucide-react";
 import { supabase, getPerfilConEmpresa } from "../services/supabase";
 
 interface ContactsPanelProps {
   contacts?: Contact[];
   onSelectContact?: (contact: Contact) => void;
   onDeleteContact?: (contactId: string) => void;
-  onAddContact?: (newContact: Contact) => void;
-  onLoadDataset?: (datasetContacts: Contact[]) => void;
   fetchContactos?: () => Promise<void>;
   isMobileLayout?: boolean;
 }
@@ -18,15 +15,12 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
   contacts = [],
   onSelectContact = () => {},
   onDeleteContact = () => {},
-  onAddContact = () => {},
-  onLoadDataset = () => {},
   fetchContactos = async () => {},
   isMobileLayout = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showDatasetMenu, setShowDatasetMenu] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Formulario con campos en INGLES para coincidir con tabla contacts
@@ -35,7 +29,7 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
     email: "",
     city: "",
     phone: "",
-    lead_stage: "Lead Nuevo" as LeadStage,
+    lead_stage: "Lead" as LeadStage,
   });
 
   const selectedContact = (contacts || []).find((c) => c.id === selectedContactId);
@@ -58,7 +52,7 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
       email: contact.email || "",
       city: contact.city || "",
       phone: contact.phone || "",
-      lead_stage: contact.leadStage || "Lead Nuevo",
+      lead_stage: contact.leadStage || "Lead",
     });
     setIsEditing(true);
   };
@@ -70,7 +64,7 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
       email: "",
       city: "",
       phone: "",
-      lead_stage: "Lead Nuevo",
+      lead_stage: "Lead",
     });
     setSelectedContactId(null);
     setIsEditing(true);
@@ -84,7 +78,7 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
     const email = editForm.email || (selectedContact?.email ?? "");
     const phone = editForm.phone || (selectedContact?.phone ?? "");
     const city = editForm.city || (selectedContact?.city ?? "");
-    const lead_stage = editForm.lead_stage || (selectedContact?.leadStage ?? "Lead Nuevo");
+    const lead_stage = editForm.lead_stage || (selectedContact?.leadStage ?? "Lead");
 
     if (!name || !phone) return;
 
@@ -143,47 +137,6 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
     }
   };
 
-  const handleAddRandomTestLead = () => {
-    const names = ["Ana Belen", "Esteban Quito", "Lucia Fernandez", "Diego Morales", "Karla Vivar"];
-    const cities = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta"];
-    const interests = ["Bot WhatsApp", "Meta Ads", "CRM Ninjabot", "TikTok Ads", "Landing Page"];
-    const leadTypes = ["Servicio", "Producto"];
-
-    const randomName = names[Math.floor(Math.random() * names.length)];
-    const randomCity = cities[Math.floor(Math.random() * cities.length)];
-    const randomInterest = interests[Math.floor(Math.random() * interests.length)];
-    const randomPhone = `+593 09${Math.floor(10000000 + Math.random() * 90000000)}`;
-    const randomEmail = `${randomName.toLowerCase().replace(/\s+/g, ".")}@test.ec`;
-
-    const newLead: Contact = {
-      id: String(Date.now()),
-      name: randomName,
-      email: randomEmail,
-      phone: randomPhone,
-      city: randomCity,
-      leadType: leadTypes[Math.floor(Math.random() * leadTypes.length)],
-      interest: randomInterest,
-      source: "WhatsApp",
-      leadStage: "Lead Nuevo" as LeadStage,
-      purchases: String(Math.floor(Math.random() * 4)),
-      unreadCount: 1,
-      lastMessage: "Hola, vi su publicidad en Meta Ads y quiero informacion",
-      lastTime: "Ahora",
-      aiAgentEnabled: true,
-      messages: [
-        {
-          id: `m-${Date.now()}`,
-          sender: "user",
-          text: "Hola, vi su publicidad en Meta Ads y quiero informacion",
-          timestamp: "Ahora",
-          channel: "whatsapp",
-        },
-      ],
-    };
-
-    onAddContact(newLead);
-  };
-
   const showDetailPanel = isEditing && (selectedContact || selectedContactId === null);
 
   return (
@@ -203,47 +156,6 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
             <span className="hidden sm:inline">Anadir Contacto</span>
             <span className="sm:hidden">Anadir</span>
           </button>
-          <div className="relative shrink-0">
-            <button
-              onClick={() => setShowDatasetMenu(!showDatasetMenu)}
-              className="bg-white hover:bg-gray-100 text-black border border-gray-300 font-bold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1 shadow-xs transition-colors"
-            >
-              <Database className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="hidden sm:inline">Data Sets</span>
-              <span className="sm:hidden">Data</span>
-            </button>
-            {showDatasetMenu && (
-              <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-200 p-2 z-50 text-xs">
-                <div className="font-bold text-gray-500 uppercase px-3 py-1.5 tracking-wider text-[10px]">
-                  Data Sets de Prueba Pre-cargados
-                </div>
-                {(DEMO_DATASETS || []).map((ds) => (
-                  <button
-                    key={ds.id}
-                    onClick={() => {
-                      onLoadDataset(ds.contacts as unknown as Contact[]);
-                      setShowDatasetMenu(false);
-                    }}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-xl font-medium text-gray-800 flex items-center justify-between transition-colors"
-                  >
-                    <span>{ds.name}</span>
-                  </button>
-                ))}
-                <div className="border-t border-gray-100 my-1.5 pt-1.5">
-                  <button
-                    onClick={() => {
-                      handleAddRandomTestLead();
-                      setShowDatasetMenu(false);
-                    }}
-                    className="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-700 rounded-xl font-bold flex items-center gap-1.5"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>+ Agregar Lead Aleatorio</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
         <div className="relative w-36 sm:w-64 shrink-0">
           <input
@@ -281,7 +193,7 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
                   {filteredContacts.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-gray-500 font-medium">
-                        No hay contactos en la lista. Puedes cargar un Data Set arriba.
+                        No hay contactos en la lista. Agrega un contacto o espera las conversaciones entrantes.
                       </td>
                     </tr>
                   ) : (
@@ -327,7 +239,7 @@ export const ContactsPanel: React.FC<ContactsPanelProps> = ({
           {/* MOBILE CARDS */}
           <div className={`${isMobileLayout ? "block" : "md:hidden"} divide-y divide-gray-300 w-full`}>
             {filteredContacts.length === 0 ? (
-              <div className="p-8 text-center text-gray-500 font-medium text-xs">No hay contactos en la lista. Carga un Data Set de prueba arriba.</div>
+              <div className="p-8 text-center text-gray-500 font-medium text-xs">No hay contactos en la lista. Agrega un contacto o espera las conversaciones entrantes.</div>
             ) : (
               filteredContacts.map((contact, index) => {
                 const isSelected = contact.id === selectedContactId && isEditing;

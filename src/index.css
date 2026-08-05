@@ -1,3 +1,375 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══ Capa 1: Tokens de Márgenes Internos para Imágenes de Tarjetas ═══
+ * Inset proporcional para medios visuales (fotos de producto, reels, posters):
+ * - .card-media-inset           → Sin borde: reproducción fluida e infinita.
+ * - .card-media-inset-bordered  → Con borde de luz: contorno luminoso para que
+ *   la foto no se funda con el fondo de la tarjeta.
+ */
+@layer utilities {
+  .card-media-inset {
+    @apply rounded-xl ring-1 ring-transparent shadow-[inset_0_0_0_1px_rgba(0,0,0,0.02)];
+  }
+
+  .dark .card-media-inset {
+    @apply ring-white/5 shadow-[0_0_24px_rgba(255,255,255,0.03),inset_0_0_0_1px_rgba(255,255,255,0.05)];
+  }
+
+  .card-media-inset-bordered {
+    @apply rounded-xl ring-1 ring-black/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),0_0_20px_rgba(0,0,0,0.06)];
+  }
+
+  .dark .card-media-inset-bordered {
+    @apply ring-white/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10),0_0_24px_rgba(255,255,255,0.04),0_8px_24px_rgba(0,0,0,0.25)];
+  }
+}
+
+/* ═══ Capa 0: Tokens de Control por Defecto — Estudio del Sistema de Diseño ═══
+ * Variables inyectadas dinámicamente por la vista "Apariencia (UI/UX)" del
+ * Sandbox (SettingsN3DetailPanel → UiUxView). Los sliders/switch escriben
+ * directamente sobre `document.documentElement.style` en tiempo real.
+ *
+ *   --card-padding        → Densidad y Espaciado (16px Compacto → 32px Relajado)
+ *   --glass-blur          → Materialidad y Superficie (4px Sutil → 20px Frosted)
+ *   --text-secondary-weight → Contraste Tipográfico (300 Regular → 500 Medium)
+ *   --accent-color        → Color de Acento Temático (botones activos)
+ */
+:root {
+  --card-padding: 16px;
+  --glass-blur: 4px;
+  --text-secondary-weight: 300;
+  --accent-color: #e056fd;
+
+  /* ═══ Tokens de Panel — Paleta Oscura Premium Sin Bordes ═══
+   * Jerarquía espacial N1–N4 por contraste tonal micro-sutil (1%–2%) +
+   * sombras ambientales tridimensionales. Eliminación total de bordes físicos.
+   *
+   *   --panel-header  #151515  (Fijo superior global)
+   *   --panel-n1      #151515  (Navegación lateral raíz)
+   *   --panel-n2      #171717  (Listas y feeds de tránsito)
+   *   --panel-n3      #141414  (Espacio de trabajo profundo e inmersivo)
+   *   --panel-n4      #151515  (Panel contextual flotante sobre N3)
+   *
+   * Sombras ambientales (tridimensionalidad sin líneas divisorias):
+   *   --shadow-panel-top    → Header sobre el contenido inferior
+   *   --shadow-panel-n4-left → N4 proyecta sombra difusa desde la izquierda
+   */
+  --panel-header: #151515;
+  --panel-n1: #151515;
+  --panel-n2: #171717;
+  --panel-n3: #141414;
+  --panel-n4: #151515;
+  --shadow-panel-top: 0 8px 32px rgba(0, 0, 0, 0.25);
+  --shadow-panel-n4-left: -12px 0 32px rgba(0, 0, 0, 0.35);
+}
+
+/* ═══ Capa 1: Tokens y Superficies — Sistema de Diseño UX UI CARD ═══ */
+@layer components {
+  /* ─── Glassmorphism (Materialidad Flotante) ─── */
+  /* Superficie principal de tarjeta/panel en modo claro */
+  .glass-card-light {
+    @apply bg-white/80 border border-black/5 shadow-[0_20px_40px_rgba(0,0,0,0.03)] rounded-none;
+    backdrop-filter: blur(var(--glass-blur, 4px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 4px));
+    padding: var(--card-padding, 16px);
+  }
+
+  /* Superficie principal de tarjeta/panel en modo oscuro */
+  .glass-card-dark {
+    @apply bg-[#151515]/80 border border-white/10 shadow-[0_24px_64px_rgba(0,0,0,0.35)] rounded-none;
+    backdrop-filter: blur(var(--glass-blur, 4px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 4px));
+    padding: var(--card-padding, 16px);
+  }
+
+  /* Superficie secundaria ultra-translúcida (inner panels, secciones) */
+  .glass-subtle-light {
+    @apply bg-white/60 border border-black/5 rounded-none;
+    backdrop-filter: blur(var(--glass-blur, 4px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 4px));
+    padding: var(--card-padding, 16px);
+  }
+
+  .glass-subtle-dark {
+    @apply bg-white/5 border border-white/10 rounded-none;
+    backdrop-filter: blur(var(--glass-blur, 4px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 4px));
+    padding: var(--card-padding, 16px);
+  }
+
+  /* Chip translúcido (badges, filtros, tags) */
+  .glass-chip-light {
+    @apply bg-black/5 border border-black/5 text-gray-500 rounded-none;
+  }
+
+  .glass-chip-dark {
+    @apply bg-white/5 border border-white/10 text-gray-400 rounded-none;
+  }
+
+  /* ─── Jerarquía Tipográfica por Opacidad ─── */
+  .text-title {
+    @apply text-sm font-medium tracking-wide text-gray-900/90 dark:text-white/90;
+  }
+
+  .text-secondary {
+    @apply text-xs tracking-wide text-gray-500/80 dark:text-white/50;
+    font-weight: var(--text-secondary-weight, 300);
+  }
+
+  .text-body {
+    @apply text-sm leading-relaxed text-gray-600/80 dark:text-white/60;
+  }
+
+  .text-meta {
+    @apply text-[11px] tracking-wide text-gray-400/40 dark:text-white/40;
+  }
+
+  .text-caption {
+    @apply text-[10px] tracking-wide text-gray-400/40 dark:text-white/40;
+  }
+
+  /* ─── Microinteracciones ─── */
+  /* Elevación suave al hover (tarjetas) */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_24px_48px_rgba(0,0,0,0.05)];
+  }
+
+  /* Compresión táctil (botones/íconos) */
+  .active-press {
+    @apply transition-all active:scale-95;
+  }
+
+  /* Aceleración del FAB (solo móvil) */
+  .fab-raised {
+    @apply transition-all duration-300 active:scale-90 hover:scale-105;
+  }
+
+  /* ═══ Paneles Limpios — Separación Espacial por Contraste Tonal ═══
+   * Elimina bordes físicos y rígidos entre paneles. La jerarquía N1–N4 se
+   * expresa mediante fondos micro-sutiles (variación 1%–2%) y sombras
+   * ambientales tridimensionales.
+   *
+   * Modo claro: glassmorphism translúcido (bg-white/80 + blur).
+   * Modo oscuro: tokens sólidos premium (--panel-header / --panel-n1 / ...).
+   */
+
+  /* ─── GlobalHeader (Top) — superficie superior fija ─── */
+  .panel-header-clean {
+    @apply border-none border-b-0 bg-white/80 backdrop-blur-md;
+    -webkit-backdrop-filter: blur(var(--glass-blur, 4px));
+    backdrop-filter: blur(var(--glass-blur, 4px));
+  }
+  .dark .panel-header-clean {
+    @apply border-none border-b-0;
+    background-color: var(--panel-header, #151515);
+    box-shadow: var(--shadow-panel-top, 0 8px 32px rgba(0, 0, 0, 0.25));
+  }
+
+  /* ─── Sidebar N1 — navegación lateral raíz ─── */
+  .panel-n1-clean {
+    @apply border-none border-r-0 border-b-0 bg-white/80 backdrop-blur-md;
+    -webkit-backdrop-filter: blur(var(--glass-blur, 4px));
+    backdrop-filter: blur(var(--glass-blur, 4px));
+  }
+  .dark .panel-n1-clean {
+    @apply border-none border-r-0 border-b-0;
+    background-color: var(--panel-n1, #151515);
+  }
+
+  /* ─── Panel N2 (List) — listas y feeds de tránsito ─── */
+  .panel-n2-clean {
+    @apply border-none border-r-0 bg-white/80 backdrop-blur-md;
+    -webkit-backdrop-filter: blur(var(--glass-blur, 4px));
+    backdrop-filter: blur(var(--glass-blur, 4px));
+  }
+  .dark .panel-n2-clean {
+    @apply border-none border-r-0;
+    background-color: var(--panel-n2, #171717);
+  }
+
+  /* ─── Panel N3 (Workspace) — espacio de trabajo profundo ─── */
+  .panel-n3-clean {
+    @apply border-none bg-transparent;
+  }
+  .dark .panel-n3-clean {
+    @apply border-none;
+    background-color: var(--panel-n3, #141414);
+  }
+
+  /* ─── Panel N4 (Focus Overlay) — flotante sobre N3 con sombra izquierda ─── */
+  .panel-n4-floating {
+    @apply border-none border-l-0 bg-white/80 backdrop-blur-md;
+    -webkit-backdrop-filter: blur(var(--glass-blur, 4px));
+    backdrop-filter: blur(var(--glass-blur, 4px));
+  }
+  .dark .panel-n4-floating {
+    @apply border-none border-l-0;
+    background-color: var(--panel-n4, #151515);
+    box-shadow: var(--shadow-panel-n4-left, -12px 0 32px rgba(0, 0, 0, 0.35));
+  }
+}
+
+/* Oculta la barra de scroll en contenedores con overflow-x-auto (estados rápidos / filtros RRSS) */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Alias moderno — oculta scrollbar en carerseles horizontales (Stories Reel) */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fade-in suave para overlays premium (VideoCard expandido) */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out;
+}
+
+/* Animación para el drawer móvil */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s ease-out;
+}
+
+/* Animación para el overlay premium iOS (Agregar a Inicio) */
+@keyframes slide-in-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Bounce suave apuntando hacia la barra inferior (ícono compartir iOS) */
+@keyframes bounce-down {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+.animate-bounce-down {
+  animation: bounce-down 1.4s ease-in-out infinite;
+}
+
+/* Cursor parpadeante del efecto Typewriter (entrenamiento IA) */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background-color: #e056fd;
+  border-radius: 1px;
+  animation: blink 1s step-end infinite;
+}
+
+/* ═══ Scroll Global Minimalista B/N (Webkit + Firefox) ═══ */
+/* Track transparente para una estética limpia y sin bordes */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #d4d4d4; /* neutral-300 (light) */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a1a1aa; /* neutral-400 (light) */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: #737373; /* neutral-500 (light) */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+/* Modo oscuro — variantes neutras B/N */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #52525b; /* neutral-600 (dark) */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #71717a; /* neutral-500 (dark) */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb:active {
+  background-color: #a1a1aa; /* neutral-400 (dark) */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+/* Firefox — scrollbar-color (thumb + track transparente) */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d4 transparent; /* light */
+}
+
+html.dark {
+  scrollbar-color: #52525b transparent; /* dark */
+}

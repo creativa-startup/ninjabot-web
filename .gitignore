@@ -10,7 +10,15 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dev-dist
+.firebase
 *.local
+.env
+.env.*
+!.env.example
+
+# Archivos artefactos de Windows
+nul
 
 # Editor directories and files
 .vscode/*

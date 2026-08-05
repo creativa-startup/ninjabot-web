@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Contact, Funnel } from '../types';
+import type { Contact, Funnel, LeadStage } from '../types';
 import { User, ChevronDown } from 'lucide-react';
 
 interface FunnelPanelProps {
@@ -10,15 +10,14 @@ interface FunnelPanelProps {
   isMobileLayout?: boolean;
 }
 
-const STAGES = [
-  'Lead Nuevo',
-  'Contactado',
-  'Interesado',
-  'Cotizacion',
-  'En negociacion',
-  'Cerrado',
-  'Perdido',
-] as const;
+const LEAD_STAGES: LeadStage[] = [
+  'Lead',
+  'Contacted',
+  'Scheduled',
+  'Checkout',
+  'Purchased',
+  'Lost',
+];
 
 export const FunnelPanel: React.FC<FunnelPanelProps> = ({
   contacts,
@@ -31,14 +30,12 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
   const [activeFunnelId, setActiveFunnelId] = useState<string | null>(funnels[0]?.id || '1');
 
-  // Mobile Sub-View Tab State
-
   // Form State
   const [formTipo, setFormTipo] = useState('Servicio');
   const [formInteres, setFormInteres] = useState('Meta Ads Esencial');
   const [formPresupuesto, setFormPresupuesto] = useState('$ 150');
   const [formDescripcion, setFormDescripcion] = useState(
-    'DescripciÃƒÂ³n del Producto o servicio'
+    'DescripciÃ³n del Producto o servicio'
   );
 
   // Filters State
@@ -63,7 +60,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
       tipo: formTipo || 'Servicio',
       interes: formInteres,
       presupuesto: formPresupuesto || '$ 150',
-      descripcion: formDescripcion || 'DescripciÃƒÂ³n del Producto o servicio',
+      descripcion: formDescripcion || 'DescripciÃ³n del Producto o servicio',
     };
     if (parentOnAddFunnel) {
       parentOnAddFunnel(newFunnel);
@@ -85,9 +82,9 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
     }
   };
 
-  // Get contact stage count for horizontal funnel chart
+  // Get contact stage count for horizontal funnel chart - filters directly from props
   const getStageCount = (stageName: string) => {
-    const matching = contacts.filter((c) => {
+    return contacts.filter((c) => {
       // Funnel / Interest filter check
       if (selectedInteres && selectedInteres !== 'Todos' && selectedInteres !== 'Todos los embudos') {
         if (c.interest && c.interest.toLowerCase() !== selectedInteres.toLowerCase()) return false;
@@ -100,17 +97,32 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
       if (selectedFuente !== 'Fuente' && selectedFuente !== 'Todas' && selectedFuente !== 'Todas las fuentes') {
         if (c.source && c.source.toLowerCase() !== selectedFuente.toLowerCase()) return false;
       }
-      // Stage check
-      const matchStage =
-        c.leadStage.toLowerCase() === stageName.toLowerCase() ||
-        (stageName === 'Lead Nuevo' && c.leadStage.toLowerCase() === 'lead nuevo');
-      return matchStage;
-    });
-
-    return matching.length;
+      // Stage check (case-insensitive match)
+      return c.leadStage.toLowerCase() === stageName.toLowerCase();
+    }).length;
   };
 
-  // Filter contacts list for the right panel / bottom section
+  /**
+   * Normaliza la fuente de registro del contacto para mostrar una etiqueta
+   * de trazabilidad legible: 'ninjabot'/'web' → "Nativa", 'google' → "Google",
+   * 'whatsapp'/'facebook'/'instagram' → nombre de la plataforma.
+   */
+  const getFuenteLabel = (contact: Contact): string => {
+    const fuente = (contact.originPlatform || contact.source || '').toLowerCase();
+    if (fuente === 'ninjabot' || fuente === 'nativa' || fuente === 'nativo' || fuente === 'web' || fuente === '') {
+      return 'Nativa';
+    }
+    switch (fuente) {
+      case 'google': return 'Google';
+      case 'whatsapp': return 'WhatsApp';
+      case 'facebook': return 'Facebook';
+      case 'instagram': return 'Instagram';
+      case 'messenger': return 'Messenger';
+      default: return contact.source || 'Nativa';
+    }
+  };
+
+  // Filter contacts list for the right panel / bottom section - uses props directly
   const filteredContacts = contacts.filter((c) => {
     // Funnel / Interest Filter
     if (selectedInteres && selectedInteres !== 'Todos' && selectedInteres !== 'Todos los embudos') {
@@ -132,16 +144,10 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
     }
     // Stage Filter
     if (selectedStage !== 'Todas' && selectedStage !== 'Todas las Etapas') {
-      const matchStage =
-        c.leadStage.toLowerCase() === selectedStage.toLowerCase() ||
-        (selectedStage === 'Lead Nuevo' && c.leadStage.toLowerCase() === 'lead nuevo');
-      if (!matchStage) return false;
+      return c.leadStage.toLowerCase() === selectedStage.toLowerCase();
     }
     return true;
   });
-
-  // Display filtered contacts
-  const displayContacts = filteredContacts;
 
   return (
     <div className="w-full h-full bg-[#eaeaea] text-gray-900 flex flex-col overflow-y-auto select-none font-sans min-w-0 relative">
@@ -173,7 +179,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
               <div>
                 <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                  InterÃƒÂ©s
+                  InterÃ©s
                 </label>
                 <input
                   type="text"
@@ -199,13 +205,13 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
               <div className="sm:col-span-2 lg:col-span-3">
                 <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                  DescripciÃƒÂ³n
+                  DescripciÃ³n
                 </label>
                 <input
                   type="text"
                   value={formDescripcion}
                   onChange={(e) => setFormDescripcion(e.target.value)}
-                  placeholder="DescripciÃƒÂ³n del Producto o servicio"
+                  placeholder="DescripciÃ³n del Producto o servicio"
                   className="w-full bg-white text-gray-900 p-2.5 rounded-lg border-none shadow-2xs text-xs font-medium outline-none focus:ring-2 focus:ring-black/20"
                 />
               </div>
@@ -242,7 +248,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
                   Embudos
                 </span>
 
-                {/* Filter 1: InterÃƒÂ©s */}
+                {/* Filter 1: InterÃ©s */}
                 <div className="relative inline-flex items-center">
                   <select
                     value={selectedInteres}
@@ -265,11 +271,11 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
                     onChange={(e) => setSelectedCiudad(e.target.value)}
                     className="appearance-none bg-transparent font-extrabold text-xs sm:text-sm text-gray-900 pr-5 cursor-pointer outline-none hover:opacity-80"
                   >
-                    <option value="Todas las ciudades">Quito</option>
-                    <option value="Quito">Quito</option>
-                    <option value="Guayaquil">Guayaquil</option>
-                    <option value="Cuenca">Cuenca</option>
-                    <option value="Manta">Manta</option>
+                    <option value="Todas las ciudades">Todas las ciudades</option>
+                    <option value="quito">Quito</option>
+                    <option value="guayaquil">Guayaquil</option>
+                    <option value="cuenca">Cuenca</option>
+                    <option value="manta">Manta</option>
                   </select>
                   <ChevronDown className="w-4 h-4 text-gray-800 pointer-events-none -ml-4" />
                 </div>
@@ -282,10 +288,10 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
                     className="appearance-none bg-transparent font-extrabold text-xs sm:text-sm text-gray-900 pr-5 cursor-pointer outline-none hover:opacity-80"
                   >
                     <option value="Todas las fuentes">Fuente</option>
-                    <option value="WhatsApp">WhatsApp</option>
-                    <option value="Facebook">Facebook</option>
-                    <option value="Instagram">Instagram</option>
-                    <option value="Web">Web</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="web">Web</option>
                   </select>
                   <ChevronDown className="w-4 h-4 text-gray-800 pointer-events-none -ml-4" />
                 </div>
@@ -310,12 +316,12 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
               </div>
             </div>
 
-            {/* FUNNEL STAGE BAR CHART */}
+            {/* 6 STAGE FUNNEL BAR CHART - dynamically rendered from LEAD_STAGES */}
             <div className="mb-6 space-y-2.5 max-w-2xl w-full">
-              {STAGES.map((stageName, idx) => {
+              {LEAD_STAGES.map((stageName, idx) => {
                 const count = getStageCount(stageName);
-                // Proportional bar width calculation based on funnel shape & count
-                const baseWidths = [100, 88, 76, 64, 52, 40, 25];
+                // Proportional bar width: progressively narrower through the funnel
+                const baseWidths = [100, 88, 76, 64, 52, 40];
                 const widthPercent = Math.max(15, Math.min(100, baseWidths[idx] || 30));
 
                 return (
@@ -357,7 +363,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
                   <div>
                     <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                      InterÃƒÂ©s
+                      InterÃ©s
                     </label>
                     <input
                       type="text"
@@ -382,7 +388,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
                 <div className="mb-4">
                   <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                    DescripciÃƒÂ³n
+                    DescripciÃ³n
                   </label>
                   <input
                     type="text"
@@ -420,7 +426,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
                   className="appearance-none bg-transparent font-extrabold text-xs text-gray-900 pr-5 cursor-pointer outline-none hover:opacity-80"
                 >
                   <option value="Todas las Etapas">Todas las Etapas</option>
-                  {STAGES.map((s) => (
+                  {LEAD_STAGES.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
@@ -438,12 +444,12 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
             {/* Contact Rows List */}
             <div className="w-full md:flex-1 divide-y divide-gray-300/80 md:overflow-y-auto min-w-0">
-              {displayContacts.length === 0 ? (
+              {filteredContacts.length === 0 ? (
                 <div className="p-6 text-center text-xs text-gray-500 font-semibold">
                   No hay contactos para los filtros seleccionados
                 </div>
               ) : (
-                displayContacts.map((contact) => {
+                filteredContacts.map((contact) => {
                   const isSelected = selectedContactId === contact.id;
 
                 return (
@@ -479,7 +485,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
                       <div className="truncate text-xs">{contact.email}</div>
                     </div>
 
-                    {/* EXPANDED DETAILS ACCORDION (Matches Screenshot 4 & 5) */}
+                    {/* EXPANDED DETAILS ACCORDION */}
                     {isSelected && (
                       <div className="bg-[#eaeaea] p-3.5 sm:p-4 border-b border-gray-300 flex items-center justify-between gap-3 text-xs text-gray-900 animate-in fade-in slide-in-from-top-1 duration-200">
                         {/* Details Fields Grid */}
@@ -490,7 +496,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
                             {contact.phone}
                           </div>
 
-                          <div className="truncate">{contact.source || 'WhatsApp'}</div>
+                          <div className="truncate">{getFuenteLabel(contact)}</div>
                           <div className="truncate">{contact.leadType || 'Servicio'}</div>
                           <div className="truncate">{contact.interest || 'Meta Ads Esencial'}</div>
                         </div>
@@ -535,7 +541,7 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
               <div>
                 <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                  InterÃƒÂ©s
+                  InterÃ©s
                 </label>
                 <input
                   type="text"
@@ -562,13 +568,13 @@ export const FunnelPanel: React.FC<FunnelPanelProps> = ({
 
             <div>
               <label className="block font-extrabold text-xs text-gray-900 mb-1">
-                DescripciÃƒÂ³n
+                DescripciÃ³n
               </label>
               <input
                 type="text"
                 value={formDescripcion}
                 onChange={(e) => setFormDescripcion(e.target.value)}
-                placeholder="DescripciÃƒÂ³n del Producto o servicio"
+                placeholder="DescripciÃ³n del Producto o servicio"
                 className="w-full bg-white text-gray-900 p-2.5 rounded-lg border border-gray-200 shadow-2xs text-xs font-medium outline-none focus:ring-2 focus:ring-black/20"
               />
             </div>

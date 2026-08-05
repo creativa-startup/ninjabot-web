@@ -16,6 +16,15 @@ interface NewContactModalProps {
   ) => void;
 }
 
+const LEAD_STAGES: LeadStage[] = [
+  'Lead',
+  'Contacted',
+  'Scheduled',
+  'Checkout',
+  'Purchased',
+  'Lost',
+];
+
 export const NewContactModal: React.FC<NewContactModalProps> = ({
   isOpen,
   onClose,
@@ -26,7 +35,7 @@ export const NewContactModal: React.FC<NewContactModalProps> = ({
   const [phone, setPhone] = useState('+593 ');
   const [city, setCity] = useState('Quito');
   const [interest, setInterest] = useState(funnels[0]?.interes || 'Meta Ads Esencial');
-  const [leadStage, setLeadStage] = useState<LeadStage>('Lead Nuevo');
+  const [leadStage, setLeadStage] = useState<LeadStage>('Lead');
   const [firstMessage, setFirstMessage] = useState('Hola, quisiera información sobre Ninjabot.');
 
   if (!isOpen) return null;
@@ -147,11 +156,9 @@ export const NewContactModal: React.FC<NewContactModalProps> = ({
               onChange={(e) => setLeadStage(e.target.value as LeadStage)}
               className="w-full bg-gray-50 border border-gray-300 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-black font-medium"
             >
-              <option value="Lead nuevo">Lead nuevo</option>
-              <option value="Interesado">Interesado</option>
-              <option value="En negociación">En negociación</option>
-              <option value="Cliente">Cliente</option>
-              <option value="Cerrado">Cerrado</option>
+              {LEAD_STAGES.map((stage) => (
+                <option key={stage} value={stage}>{stage}</option>
+              ))}
             </select>
           </div>
 

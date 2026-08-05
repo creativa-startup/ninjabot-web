@@ -1,75 +1,130 @@
-import { logoutUsuario, getPerfilActual, supabase } from './services/supabase';
-import { useState, useEffect } from 'react';
-import type { Contact, Funnel, LeadStage, NavigationTab } from './types';
+import { logoutUsuario, getPerfilActual, supabase, syncAuthSourceFromUser } from './services/supabase';
+import { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import type { Contact, Funnel, LeadStage, MessagingPlatform, NavigationTab, PlatformConnection } from './types';
 
-import { Header } from './components/Header';
-import { SidebarPC } from './components/SidebarPC';
-import { MobileTabs } from './components/MobileTabs';
-import { ChatListPanel } from './components/ChatListPanel';
-import { ChatDetailPanel } from './components/ChatDetailPanel';
-import { FunnelPanel } from './components/FunnelPanel';
-import { ContactsPanel } from './components/ContactsPanel';
-import { SettingsPanel } from './components/SettingsPanel';
-import { NewContactModal } from './components/NewContactModal';
-import { LoginScreen } from './components/LoginScreen';
+import { AuthScreen } from './auth/AuthScreen';
+import { PowerAppGuard } from './components/guard/PowerAppGuard';
+import { MainLayout } from './components/layout/MainLayout';
+import { PublicNinjatLayout } from './components/layout/PublicNinjatLayout';
+import { LayoutDemo } from './demo/LayoutDemo';
+import { useEnvironment } from './env/EnvironmentContext';
+import { useIsMobile } from './hooks/useIsMobile';
 
 export function App() {
+  const { environment } = useEnvironment();
+  const isMobile = useIsMobile();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>('');
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
+
+  const [, setUserEmail] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [funnels, setFunnels] = useState<Funnel[]>([]);
+  const [funnels] = useState<Funnel[]>([]);
   const [activeContactId, setActiveContactId] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<NavigationTab>('chats');
+  const [integrationsEnabled, setIntegrationsEnabled] = useState<boolean>(false);
   const [mobileSubView, setMobileSubView] = useState<'list' | 'chat'>('list');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [isNewContactModalOpen, setIsNewContactModalOpen] = useState(false);
-  const [globalAiEnabled, setGlobalAiEnabled] = useState(true);
-  const [customInstruction, setCustomInstruction] = useState(
+  const [globalAiEnabled] = useState(true);
+  const [customInstruction] = useState(
     "Eres un asesor de ventas de Ninjabot para WhatsApp Business. Responde en español de forma muy concisa, amable y profesional (máximo 2 oraciones). Tu meta es ofrecer información sobre la automatización de WhatsApp Business y agendar demostraciones."
   );
 
+  // Platform connection status for omnichannel filter tabs
+  const [platformStatus, setPlatformStatus] = useState<Record<string, PlatformConnection>>({
+    whatsapp: 'connected',
+    messenger: 'disconnected',
+    instagram: 'disconnected',
+  });
+  const [platformToConnect, setPlatformToConnect] = useState<MessagingPlatform | null>(null);
+
+  const [saleModalContactId, setSaleModalContactId] = useState<string | null>(null);
+  const [capiActive] = useState<boolean>(true);
+
+  // Al cruzar de móvil a PC: solo chats/contacts existen en desktop,
+  // evita que aparezcan módulos antiguos no integrados al cambiar de dispositivo.
+  useEffect(() => {
+    if (!isMobile) {
+      setActiveTab((prev) => (prev === 'chats' || prev === 'contacts' ? prev : 'chats'));
+      setMobileSubView('list');
+    }
+  }, [isMobile]);
+
+  const handlePlatformConnectSuccess = useCallback((_email: string, _name: string) => {
+    if (platformToConnect) {
+      setPlatformStatus((prev) => ({ ...prev, [platformToConnect]: 'connected' }));
+    }
+  }, [platformToConnect]);
+
+  const unreadMessagesCount = contacts.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+
   const activeContact = contacts.find((c) => c.id === activeContactId) || null;
+
+  const activeContactForSale = saleModalContactId
+    ? contacts.find((c) => c.id === saleModalContactId) || null
+    : activeContact;
+
+  const handleRegisterSale = async (saleData: { contactId: string; amount: number; description: string }) => {
+    console.log('[Venta Registrada]', saleData);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setContacts((prev) =>
+      prev.map((c) =>
+        c.id === saleData.contactId ? { ...c, leadStage: 'Purchased' as LeadStage } : c
+      )
+    );
+  };
 
   // Escuchar cambios de sesión en tiempo real
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         try {
+          // Trazabilidad: sincroniza la entidad de origen (google/ninjabot/facebook)
+          await syncAuthSourceFromUser(session.user);
           const perfil = await getPerfilActual();
           setUserEmail(perfil.email);
           setUserName(perfil.full_name || '');
+          setAvatarUrl(session.user.user_metadata?.avatar_url || null);
           setIsLoggedIn(true);
         } catch {
-          // Fallback si no hay perfil en la tabla perfiles
           setUserEmail(session.user.email || '');
           setUserName(session.user.email?.split('@')[0] || 'Usuario');
+          setAvatarUrl(session.user.user_metadata?.avatar_url || null);
           setIsLoggedIn(true);
         }
       } else if (event === 'SIGNED_OUT') {
         setUserEmail('');
         setUserName('');
+        setAvatarUrl(null);
         setIsLoggedIn(false);
       }
     });
 
-    // Verificar si ya hay una sesión activa al cargar
     const restaurarSesion = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         try {
+          // Trazabilidad: sincroniza la entidad de origen al restaurar sesión
+          await syncAuthSourceFromUser(session.user);
           const perfil = await getPerfilActual();
           setUserEmail(perfil.email);
           setUserName(perfil.full_name || '');
+          setAvatarUrl(session.user.user_metadata?.avatar_url || null);
           setIsLoggedIn(true);
         } catch {
           setUserEmail(session.user.email || '');
           setUserName(session.user.email?.split('@')[0] || 'Usuario');
+          setAvatarUrl(session.user.user_metadata?.avatar_url || null);
           setIsLoggedIn(true);
         }
       }
+      setIsAuthReady(true);
     };
     restaurarSesion();
 
@@ -78,7 +133,7 @@ export function App() {
     };
   }, []);
 
-  const handleLogin = (email: string, name: string) => {
+  const handleAuthSuccess = (email: string, name: string) => {
     setUserEmail(email);
     setUserName(name);
     setIsLoggedIn(true);
@@ -92,11 +147,8 @@ export function App() {
     }
     setUserEmail('');
     setUserName('');
+    setAvatarUrl(null);
     setIsLoggedIn(false);
-  };
-
-  const handleAddFunnel = (newFunnel: Funnel) => {
-    setFunnels((prev) => [...prev, newFunnel]);
   };
 
   const handleSelectContact = (contact: Contact) => {
@@ -124,11 +176,10 @@ export function App() {
 
   const handleSendMessage = async (text: string, isFromUser: boolean = false) => {
     if (!activeContact) return;
-
     const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const newMessage = {
       id: `msg-${Date.now()}`,
-      sender: (isFromUser ? 'user' : 'agent') as 'user' | 'agent' | 'ia',
+      sender: (isFromUser ? 'user' : 'agent') as 'user' | 'agent',
       text,
       timestamp: timeString,
       channel: 'whatsapp' as const,
@@ -138,20 +189,12 @@ export function App() {
     const updatedMessages = [...(activeContact.messages || []), newMessage];
     setContacts((prev) =>
       prev.map((c) =>
-        c.id === activeContact.id
-          ? {
-              ...c,
-              messages: updatedMessages,
-              lastMessage: text,
-              lastTime: timeString,
-            }
-          : c
+        c.id === activeContact.id ? { ...c, messages: updatedMessages, lastMessage: text, lastTime: timeString } : c
       )
     );
 
     if (isFromUser && activeContact.aiAgentEnabled) {
       setIsLoadingAi(true);
-
       try {
         const response = await fetch('/api/chat/ai-reply', {
           method: 'POST',
@@ -164,29 +207,19 @@ export function App() {
             customInstruction,
           }),
         });
-
         const data = await response.json();
         const replyText = data.reply || "¡Saludos desde Ninjabot! ¿En qué puedo guiarte hoy?";
-
         const aiMessage = {
           id: `ai-${Date.now()}`,
-          sender: 'ia' as const,
+          sender: 'agent' as const,
           text: replyText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           channel: 'ia' as const,
           status: 'read' as const,
         };
-
         setContacts((prev) =>
           prev.map((c) =>
-            c.id === activeContact.id
-              ? {
-                  ...c,
-                  messages: [...(c.messages || []), aiMessage],
-                  lastMessage: replyText,
-                  lastTime: aiMessage.timestamp,
-                }
-              : c
+            c.id === activeContact.id ? { ...c, messages: [...(c.messages || []), aiMessage], lastMessage: replyText, lastTime: aiMessage.timestamp } : c
           )
         );
       } catch (err) {
@@ -207,33 +240,15 @@ export function App() {
   ) => {
     const newId = String(Date.now());
     const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
     const newContact: Contact = {
-      id: newId,
-      name,
+      id: newId, name,
       email: `${name.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
-      phone,
-      city: city || 'Quito',
-      leadType: 'Servicio',
-      interest: interest || funnels[0]?.interes || 'Meta Ads Esencial',
-      source: 'WhatsApp',
-      leadStage,
-      purchases: '0',
-      unreadCount: 1,
-      lastMessage: firstMessage,
-      lastTime: timeString,
-      aiAgentEnabled: globalAiEnabled,
-      messages: [
-        {
-          id: `msg-${Date.now()}`,
-          sender: 'user',
-          text: firstMessage,
-          timestamp: timeString,
-          channel: 'whatsapp',
-        },
-      ],
+      phone, city: city || 'Quito',
+      leadType: 'Servicio', interest: interest || funnels[0]?.interes || 'Meta Ads Esencial',
+      source: 'WhatsApp', leadStage, purchases: '0', unreadCount: 1,
+      lastMessage: firstMessage, lastTime: timeString, aiAgentEnabled: globalAiEnabled,
+      messages: [{ id: `msg-${Date.now()}`, sender: 'user', text: firstMessage, timestamp: timeString, channel: 'whatsapp' }],
     };
-
     setContacts([newContact, ...contacts]);
     setActiveContactId(newId);
     setActiveTab('chats');
@@ -248,43 +263,18 @@ export function App() {
     }
   };
 
-  const handleAddRawContact = (newContact: Contact) => {
-    setContacts((prev) => [newContact, ...prev]);
-  };
-
-  const handleLoadDataset = (datasetContacts: Contact[]) => {
-    setContacts(datasetContacts);
-    if (datasetContacts.length > 0) {
-      setActiveContactId(datasetContacts[0].id);
-    }
-  };
-
-  // Fetch contacts from Supabase and map to Contact type
   const fetchContactos = async () => {
     try {
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('contacts').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       if (data) {
         const mapped: Contact[] = data.map((item: any) => ({
-          id: String(item.id),
-          name: item.name || '',
-          email: item.email || '',
-          phone: item.phone || '',
-          city: item.city || 'Quito',
-          leadType: item.lead_type || 'Servicio',
-          interest: item.interest || 'Meta Ads',
-          source: item.source || 'WhatsApp',
-          leadStage: (item.lead_stage || 'Lead Nuevo') as LeadStage,
-          purchases: String(item.purchases ?? '0'),
-          unreadCount: item.unread_count ?? 0,
-          lastMessage: item.last_message || '',
-          lastTime: item.last_time || '',
-          aiAgentEnabled: item.ai_agent_enabled ?? true,
-          notes: item.notes || '',
-          messages: item.messages || [],
+          id: String(item.id), name: item.name || '', email: item.email || '', phone: item.phone || '',
+          city: item.city || 'Quito', leadType: item.lead_type || 'Servicio', interest: item.interest || 'Meta Ads',
+          source: item.source || 'WhatsApp', leadStage: (item.lead_stage || 'Lead') as LeadStage,
+          purchases: String(item.purchases ?? '0'), unreadCount: item.unread_count ?? 0,
+          lastMessage: item.last_message || '', lastTime: item.last_time || '',
+          aiAgentEnabled: item.ai_agent_enabled ?? true, notes: item.notes || '', messages: item.messages || [],
         }));
         setContacts(mapped);
       }
@@ -293,214 +283,147 @@ export function App() {
     }
   };
 
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={handleLogin} />;
+  // Antes de saber si hay sesión restaurada, evitamos destellos/redirecciones falsas
+  if (!isAuthReady) {
+    return (
+      <div className="bg-black h-screen w-full flex items-center justify-center font-sans select-none">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-4 border-white/20 border-t-white animate-spin" />
+          <p className="text-xs text-neutral-500 font-medium">Cargando Ninjabot...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="w-screen h-screen flex flex-col overflow-hidden font-sans">
+    <BrowserRouter>
+      <Routes>
+        {/* ─── Rama Pública: /auth (sin N1-N4, sin headers globales) ─── */}
+        <Route
+          path="/auth"
+          element={
+            isLoggedIn ? (
+              <Navigate to="/app" replace />
+            ) : (
+              <AuthScreen onAuthSuccess={handleAuthSuccess} />
+            )
+          }
+        />
 
-      <main className="flex-1 w-full h-full overflow-hidden flex">
-        {window.innerWidth >= 768 && (
-          <div className="w-full h-full bg-white flex overflow-hidden">
-            <SidebarPC
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onLogoutClick={handleLogout}
-            />
-
-            <div className="flex-1 flex flex-col h-full min-w-0">
-              <Header
-                subtitle="Mensajería Inteligente"
-                showLogoIcon={false}
+        {/* ─── Rama Privada: /app (protegida por PowerAppGuard) ─── */}
+        <Route
+          path="/app"
+          element={
+            environment === 'sandbox' ? (
+              <LayoutDemo />
+            ) : (
+            <PowerAppGuard isLoggedIn={isLoggedIn}>
+              <MainLayout
                 userName={userName}
+                avatarUrl={avatarUrl}
+                onLogout={handleLogout}
+                contacts={contacts}
+                activeContactId={activeContactId}
+                activeContact={activeContact}
+                unreadMessagesCount={unreadMessagesCount}
+                funnels={funnels}
+                capiActive={capiActive}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                isMobile={isMobile}
+                mobileSubView={mobileSubView}
+                onMobileSubViewChange={setMobileSubView}
+                onSelectContact={handleSelectContact}
+                searchQuery={searchQuery}
+                onSearchQueryChange={setSearchQuery}
+                isLoadingAi={isLoadingAi}
+                onSendMessage={handleSendMessage}
+                onToggleAiAgent={handleToggleAiAgent}
+                onChangeLeadStage={handleChangeLeadStage}
+                onAddContact={handleAddContact}
+                onDeleteContact={handleDeleteContact}
+                fetchContactos={fetchContactos}
+                integrationsEnabled={integrationsEnabled}
+                onToggleIntegrations={setIntegrationsEnabled}
+                platformStatus={platformStatus}
+                onConnectPlatform={(p) => setPlatformToConnect(p)}
+                isNewContactModalOpen={isNewContactModalOpen}
+                onNewContactModalClose={() => setIsNewContactModalOpen(false)}
+                platformToConnect={platformToConnect}
+                onPlatformConnectClose={() => setPlatformToConnect(null)}
+                onPlatformConnectSuccess={handlePlatformConnectSuccess}
+                saleModalContactId={saleModalContactId}
+                onSaleModalClose={() => setSaleModalContactId(null)}
+                onOpenSaleModal={() => setSaleModalContactId(activeContact?.id || null)}
+                activeContactForSale={activeContactForSale}
+                onRegisterSale={handleRegisterSale}
               />
+            </PowerAppGuard>
+            )
+          }
+        />
 
-              <div className="flex-1 flex h-full min-h-0 overflow-hidden">
-                {activeTab === 'chats' && (
-                  <>
-                    <div className="w-80 lg:w-96 shrink-0 h-full">
-                      <ChatListPanel
-                        contacts={contacts}
-                        activeContactId={activeContactId}
-                        onSelectContact={handleSelectContact}
-                        searchQuery={searchQuery}
-                                                setSearchQuery={setSearchQuery}
-                      />
-                    </div>
-                    <div className="flex-1 h-full min-w-0">
-                      {activeContact ? (
-                        <ChatDetailPanel
-                          contact={activeContact}
-                          onSendMessage={handleSendMessage}
-                          onToggleAiAgent={handleToggleAiAgent}
-                          onChangeLeadStage={(stage) => handleChangeLeadStage(stage)}
-                          isLoadingAi={isLoadingAi}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#eaeaea] text-gray-500 text-sm">
-                          Selecciona un chat para comenzar
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+        {/* ─── Perfil Ninjat: /@handle (Club Privado — Cadenero + PowerAppGuard) ─── */}
+        <Route
+          path="/@:handle"
+          element={
+            <PublicNinjatLayout isLoggedIn={isLoggedIn}>
+              {environment === 'sandbox' ? (
+                <LayoutDemo />
+              ) : (
+              <PowerAppGuard isLoggedIn={isLoggedIn}>
+                <MainLayout
+                  userName={userName}
+                  avatarUrl={avatarUrl}
+                  onLogout={handleLogout}
+                  contacts={contacts}
+                  activeContactId={activeContactId}
+                  activeContact={activeContact}
+                  unreadMessagesCount={unreadMessagesCount}
+                  funnels={funnels}
+                  capiActive={capiActive}
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                  isMobile={isMobile}
+                  mobileSubView={mobileSubView}
+                  onMobileSubViewChange={setMobileSubView}
+                  onSelectContact={handleSelectContact}
+                  searchQuery={searchQuery}
+                  onSearchQueryChange={setSearchQuery}
+                  isLoadingAi={isLoadingAi}
+                  onSendMessage={handleSendMessage}
+                  onToggleAiAgent={handleToggleAiAgent}
+                  onChangeLeadStage={handleChangeLeadStage}
+                  onAddContact={handleAddContact}
+                  onDeleteContact={handleDeleteContact}
+                  fetchContactos={fetchContactos}
+                  integrationsEnabled={integrationsEnabled}
+                  onToggleIntegrations={setIntegrationsEnabled}
+                  platformStatus={platformStatus}
+                  onConnectPlatform={(p) => setPlatformToConnect(p)}
+                  isNewContactModalOpen={isNewContactModalOpen}
+                  onNewContactModalClose={() => setIsNewContactModalOpen(false)}
+                  platformToConnect={platformToConnect}
+                  onPlatformConnectClose={() => setPlatformToConnect(null)}
+                  onPlatformConnectSuccess={handlePlatformConnectSuccess}
+                  saleModalContactId={saleModalContactId}
+                  onSaleModalClose={() => setSaleModalContactId(null)}
+                  onOpenSaleModal={() => setSaleModalContactId(activeContact?.id || null)}
+                  activeContactForSale={activeContactForSale}
+                  onRegisterSale={handleRegisterSale}
+                />
+              </PowerAppGuard>
+              )}
+            </PublicNinjatLayout>
+          }
+        />
 
-                {activeTab === 'contacts' && (
-                  <ContactsPanel
-                    contacts={contacts}
-                    onSelectContact={(c) => {
-                      handleSelectContact(c);
-                      setActiveTab('chats');
-                    }}
-                    onDeleteContact={handleDeleteContact}
-                                        onAddContact={handleAddRawContact}
-                    onLoadDataset={handleLoadDataset}
-                    fetchContactos={fetchContactos}
-                    isMobileLayout={false}
-                  />
-                )}
-
-                                {activeTab === 'funnel' && (
-                  <FunnelPanel
-                    contacts={contacts}
-                    funnels={funnels}
-                    onAddFunnel={handleAddFunnel}
-                    onSelectContact={(c) => {
-                      handleSelectContact(c);
-                      setActiveTab('chats');
-                      setMobileSubView('chat');
-                    }}
-                    isMobileLayout={false}
-                  />
-                )}
-
-                {activeTab === 'settings' && (
-                  <SettingsPanel
-                    customInstruction={customInstruction}
-                    setCustomInstruction={setCustomInstruction}
-                    globalAiEnabled={globalAiEnabled}
-                    setGlobalAiEnabled={setGlobalAiEnabled}
-                    userName={userName}
-                    userEmail={userEmail}
-                    isMobileLayout={false}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {window.innerWidth < 768 && (
-          <div className="w-full h-full bg-white flex flex-col overflow-hidden relative">
-            {activeTab === 'chats' && (
-              <>
-                {mobileSubView === 'list' && (
-                  <div className="w-full h-full flex flex-col">
-                    <Header subtitle="Mensajería Inteligente" userName={userName} />
-                    <MobileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-                    <div className="flex-1 overflow-hidden">
-                      <ChatListPanel
-                        contacts={contacts}
-                        activeContactId={activeContactId}
-                        onSelectContact={handleSelectContact}
-                        searchQuery={searchQuery}
-                                                setSearchQuery={setSearchQuery}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {(mobileSubView === 'chat') && (
-                  <div className="w-full h-full flex flex-col">
-                    <Header
-                      subtitle="Mensajería Inteligente"
-                      showBackArrow={true}
-                      onBackClick={() => setMobileSubView('list')}
-                      userName={userName}
-                    />
-                    <div className="flex-1 overflow-hidden">
-                      {activeContact ? (
-                        <ChatDetailPanel
-                          contact={activeContact}
-                          onSendMessage={handleSendMessage}
-                          onToggleAiAgent={handleToggleAiAgent}
-                          onChangeLeadStage={(stage) => handleChangeLeadStage(stage)}
-                          showBackArrow={false}
-                          onBackClick={() => setMobileSubView('list')}
-                          isLoadingAi={isLoadingAi}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#eaeaea]">
-                          Selecciona un chat
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {activeTab !== 'chats' && (
-              <div className="w-full h-full flex flex-col">
-                <Header subtitle="Mensajería Inteligente" userName={userName} />
-                <MobileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-
-                <div className="flex-1 overflow-hidden">
-                  {activeTab === 'contacts' && (
-                    <ContactsPanel
-                      contacts={contacts}
-                      onSelectContact={(c) => {
-                        handleSelectContact(c);
-                        setActiveTab('chats');
-                      }}
-                      onDeleteContact={handleDeleteContact}
-                                                                onAddContact={handleAddRawContact}
-                    onLoadDataset={handleLoadDataset}
-                    fetchContactos={fetchContactos}
-                      isMobileLayout={true}
-                    />
-                  )}
-
-                  {activeTab === 'funnel' && (
-                                        <FunnelPanel
-                      contacts={contacts}
-                      funnels={funnels}
-                      onAddFunnel={handleAddFunnel}
-                      onSelectContact={(c) => {
-                        handleSelectContact(c);
-                        setActiveTab('chats');
-                        setMobileSubView('chat');
-                      }}
-                      isMobileLayout={true}
-                    />
-                  )}
-
-                  {activeTab === 'settings' && (
-                    <SettingsPanel
-                      customInstruction={customInstruction}
-                      setCustomInstruction={setCustomInstruction}
-                      globalAiEnabled={globalAiEnabled}
-                      setGlobalAiEnabled={setGlobalAiEnabled}
-                      userName={userName}
-                      userEmail={userEmail}
-                      isMobileLayout={true}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-
-      <NewContactModal
-        isOpen={isNewContactModalOpen}
-        onClose={() => setIsNewContactModalOpen(false)}
-        funnels={funnels}
-        onAddContact={handleAddContact}
-      />
-    </div>
+        {/* ─── Fallback: redirige según sesión ─── */}
+        <Route
+          path="*"
+          element={<Navigate to={isLoggedIn ? '/app' : '/auth'} replace />}
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
